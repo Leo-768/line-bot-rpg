@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "linebot": "^1.6.1"
+  }
+}
