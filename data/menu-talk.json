@@ -1,0 +1,23 @@
+{
+    "size": {
+      "width": 2500,
+      "height": 250
+    },
+    "selected": true,
+    "name": "初始場景",
+    "chatBarText": "開啟按鈕",
+    "areas": [
+      {
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2500,
+          "height": 250
+        },
+        "action": {
+          "type": "postback",
+          "data": "next"
+        }
+      }
+    ]
+  }

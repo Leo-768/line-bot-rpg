@@ -1,15 +1,51 @@
-const linebot = require('linebot');
+const line = require('@line/bot-sdk')
+const express = require('express')
+require('dotenv').config()
 
-const bot = linebot({
-  channelId: '1657186827',
-  channelSecret: '2d2546fb98d37b9e9f57b2e995e8930a',
-  channelAccessToken: 'PmCnFtIZjKAr25Ta1C07n9j3yTGMo99SF5aTW+j/gW6giwXehX0sx8CfuuQj4OZ9SchfT3b5UcFLG/dU7bUO027xoFibdWnm2rH8/jQAM3QExjeSTa7XjBF7lrZmYLXUA9+Pe0sSK345KlBiY81XKAdB04t89/1O/w1cDnyilFU='
-});
+const config = {
+    channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
+    channelSecret: process.env.CHANNEL_SECRET,
+}
 
-bot.on('message', function (event) {
-  event.reply(event.message.text);
-});
+async function main() {
+    const client = new line.Client(config)
+    const app = express()
 
-bot.listen('/linewebhook', 3000, function () {
-    console.log('ready');
-});
+    async function getRichMenuByAlias() {
+        var aliasToId = {}
+        const datas = await client.getRichMenuAliasList()
+        const list = datas.aliases
+        for (i = 0; i < list.length; i++) {
+            aliasToId[list[i].richMenuAliasId] = list[i].richMenuId
+        }
+        return aliasToId
+    }
+    richMenuAliasToId = await getRichMenuByAlias()
+
+    app.post('/linewebhook', line.middleware(config), (req, res) => {
+        Promise
+            .all(req.body.events.map(handleEvent))
+            .then((result) => res.json(result))
+            .catch((err) => {
+                console.error(err)
+                res.status(500).end()
+            })
+    })
+
+    function handleEvent(event) {
+        if (event.type === 'message' && event.message.type === 'text') {
+            if (event.message.text === "666") return client.linkRichMenuToUser(event.source.userId, richMenuAliasToId['next'])
+            return client.replyMessage(event.replyToken, {type: 'text',text: event.message.text})
+        } else if (event.type === 'postback') {
+            if (event.postback.data === 'next') return client.unlinkRichMenuFromUser(event.source.userId)
+        }
+
+        return Promise.resolve(null)
+    }
+
+    app.listen(3000, () => {
+        console.log('on')
+    })
+}
+
+main().then()
