@@ -15,12 +15,13 @@ async function main() {
         var aliasToId = {}
         const datas = await client.getRichMenuAliasList()
         const list = datas.aliases
-        for (i = 0; i < list.length; i++) {
+        for (let i = 0; i < list.length; i++) {
             aliasToId[list[i].richMenuAliasId] = list[i].richMenuId
         }
         return aliasToId
     }
-    richMenuAliasToId = await getRichMenuByAlias()
+
+    const richMenuAliasToId = await getRichMenuByAlias()
 
     app.post('/linewebhook', line.middleware(config), (req, res) => {
         Promise

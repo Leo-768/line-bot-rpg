@@ -4,8 +4,8 @@
       "height": 250
     },
     "selected": true,
-    "name": "初始場景",
-    "chatBarText": "開啟按鈕",
+    "name": "繼續按鈕",
+    "chatBarText": "開啟介面",
     "areas": [
       {
         "bounds": {
