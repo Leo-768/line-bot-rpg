@@ -1,7 +1,7 @@
 const line = require('@line/bot-sdk')
 const express = require('express')
 require('dotenv').config()
-const richMenuAliasToId = require('./data/richmenus.json')
+const richMenuAliasToId = require('./data/richMenus.json')
 
 const config = {
     channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,

@@ -1,6 +1,6 @@
 const line = require('@line/bot-sdk');
 const fs = require('fs');
-const richmenuSets = require('./sets.json')
+const richMenuSets = require('./sets.json')
 require('dotenv').config()
 
 const config = {
@@ -19,10 +19,10 @@ async function setUp(){
         await client.deleteRichMenuAlias(oldRichmenuAlias.aliases[i].richMenuAliasId)
     }
     let richMenuId = ""
-    for (let i=0;i<richmenuSets.length;i++){
-        richMenuId = await client.createRichMenu(require('./data/'+richmenuSets[i].setting))
-        await client.setRichMenuImage(richMenuId, fs.createReadStream('./data/'+richmenuSets[i].image))
-        await client.createRichMenuAlias(richMenuId, richmenuSets[i].id)
+    for (let i=0;i<richMenuSets.length;i++){
+        richMenuId = await client.createRichMenu(require('./data/'+richMenuSets[i].setting))
+        await client.setRichMenuImage(richMenuId, fs.createReadStream('./data/'+richMenuSets[i].image))
+        await client.createRichMenuAlias(richMenuId, richMenuSets[i].id)
     }
 
     var aliasToId = {}
@@ -36,7 +36,7 @@ async function setUp(){
 
 
 setUp().then(datas=>{
-    fs.writeFile('../data/richmenus.json',JSON.stringify(datas),err=>{
+    fs.writeFile('../data/richMenus.json',JSON.stringify(datas),err=>{
         if (err) console.log(err)
         console.log(JSON.stringify(datas))
     })
