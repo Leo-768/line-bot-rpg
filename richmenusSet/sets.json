@@ -1,3 +1,4 @@
 [
-    {"id":"next","setting":"next.json","image":"next.png"}
+    {"id":"next","setting":"next.json","image":"next.png"},
+    {"id":"start","setting":"start.json","image":"start.png"}
 ]
