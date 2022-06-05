@@ -16,7 +16,7 @@
         },
         "action": {
           "type": "postback",
-          "data": "main-next"
+          "data": "ui-next"
         }
       }
     ]
