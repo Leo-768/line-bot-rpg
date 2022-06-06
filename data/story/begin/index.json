@@ -1,6 +1,3 @@
 [
-    {"type":"text","file":"background.json"},
-    {"type":"choose","file":"yes.json"},
-    {"type":"text","file":"go.json"},
-    {"type":"image","file":"go.png"}
+    "background.json"
 ]
