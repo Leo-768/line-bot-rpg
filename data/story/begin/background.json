@@ -4,8 +4,8 @@
     {"type":"choose","text":"選吧","choose":[{"display-text":"當然","send-text":"……"}]},
     "好啦不鬧你",
     {"type":"choose","text":"再選吧","choose":[{"display-text":"對","send-text":"對"},{"display-text":"錯","send-text":"錯"}]},
-    {"type":"text","text":"對即是錯","need":[{"type":"gouble-valuable","valuable":"lastchoose","equal":0}]},
-    {"type":"text","text":"錯即是對","need":[{"type":"gouble-valuable","valuable":"lastchoose","equal":1}]},
+    {"type":"text","text":"對即是錯","need":[{"type":"global","valuable":"lastchoose","equal":0}]},
+    {"type":"text","text":"錯即是對","need":[{"type":"global","valuable":"lastchoose","equal":1}]},
     "呵呵",
     {"type":"image","image":"go.png"}
 ]
