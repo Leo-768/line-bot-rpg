@@ -17,13 +17,21 @@ const config = {
     channelSecret: process.env.CHANNEL_SECRET,
 }
 
+const messages = {}
+for (const iterator of require('./data/message/index.json')) {
+    messages[iterator.replace('.json','')] = require(`./data/message/${iterator}`)
+}
 
 const db = admin.database();
 const ref = db.ref('/');
 const client = new line.Client(config)
-module.exports.client = client
-module.exports.ref = ref
-module.exports.memory = memory
+module.exports = {
+    client:client,
+    ref:ref,
+    memory:memory,
+    messages:messages,
+    altText:require('./data/altText.json')
+}
 const { handleEvent } = require("./handleEvent")
 const app = express()
 

@@ -1,12 +1,12 @@
 const richMenuAliasToId = require('./data/richMenus.json')
-const { client, ref, memory } = require("./index")
+const { client, ref, memory, messages, altText } = require("./index")
 
 async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
 ) {
 
     if (event.type === 'follow') {
         client.linkRichMenuToUser(event.source.userId, richMenuAliasToId['start'])
-        return client.replyMessage(event.replyToken, require('./data/message/welcome.json'))
+        return client.replyMessage(event.replyToken, messages['welcome'])
     }
 
     if (event.type === 'message' && event.message.type === 'text') {
@@ -47,10 +47,10 @@ function message(userId) {
 }
 */
 function run(userId, replyToken) {
-    const user_data = memory[userId]
+    const user_data = JSON.parse(JSON.stringify(memory[userId]))
     const index = require(`./data/story/${user_data.stage}/index.json`)
     const data = require(`./data/story/${user_data.stage}/${index[user_data.stage2]}`)
-    user_data.stage3++
+    //user_data.stage3++
     if (!data[user_data.stage3]) {
         memory[userId].stage2++
         memory[userId].stage3 = 0
@@ -59,27 +59,23 @@ function run(userId, replyToken) {
     // 純字串解析
     if (typeof data[user_data.stage3] === 'string') {
         memory[userId].stage3++
-        return client.replyMessage(replyToken, { type: 'text', text: data[user_data.stage3] })
+        return client.replyMessage(replyToken, { type: 'text', text: textVar(data[user_data.stage3],user_data) })
     }
     // need 解析
     if (data[user_data.stage3].need) {
         let success = true
-        for (let i = 0; i < data[user_data.stage3].need; i++) {
-            const data2 = data[user_data.stage3].need[i]
-            let valuable = user_data
-            if (data2.type === 'global') {
-                valuable = valuable[data2.valuable]
-            } else if (data2.type === 'var') {
-                valuable = user_data.var[data2.valuable]
-            }
-            if (!(!(data2.equal && valuable === data2.equal) || !(data2.min && valuable >= data2.min) || !(data2.max && valuable <= data2.max))) {
-                success = false
-                break
+        for (let i of data[user_data.stage3].need) {
+            let variable = variable_path(user_data, i.variable)
+            if (i.type === 'variable') {
+                if (!((i.equal === undefined || variable === i.equal) && (i.min === undefined || variable >= i.min) && (i.max === undefined || variable <= i.max))) {
+                    success = false
+                    break
+                }
             }
         }
         if (!success) {
             if (data[user_data.stage3].type === 'block-start') {
-                let i = user_data.stage3
+                let i = user_data.stage3 + 1
                 let iterate = 1
                 while (iterate > 0) {
                     if (data[i].type === 'block-end') {
@@ -90,7 +86,7 @@ function run(userId, replyToken) {
                     i++
                 }
                 memory[userId].stage3 = i
-            }else{
+            } else {
                 memory[userId].stage3++
             }
             return run(userId, replyToken)
@@ -98,11 +94,35 @@ function run(userId, replyToken) {
     }
     switch (data[user_data.stage3].type) {
         case 'text':
-
-            break;
+            client.replyMessage(replyToken, { type: 'text', text: textVar(data[user_data.stage3].text,user_data) })
+            break
+        case 'choose':
+            {
+            let choose = []
+            for (const i of data[user_data.stage3].choose) {
+                choose.push({type:'postback',label:i['display-text'],displayText:i['send-text'],data:'ui-next'})
+            }
+            client.replyMessage(replyToken, { type: 'template', altText: altText ,template:{
+                type:'buttons',
+                text:data[user_data.stage3].text,
+                actions:choose
+            }})
+            }
         default:
-            break;
+            break
     }
+    memory[userId].stage3++
+}
+
+function textVar(text, variable) {
+    return text.replace(/%(.*?)%/g, (match, p1, offset, string) => { return variable_path(variable, p1) }).replaceAll(':percent-sign:', '%')
+}
+
+function variable_path(variable, path) {
+    for (let i of path.split('.')) {
+        variable = variable[i]
+    }
+    return variable
 }
 
 exports.handleEvent = handleEvent;
