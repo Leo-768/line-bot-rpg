@@ -4,7 +4,7 @@ const { client, ref, memory, messages, altText } = require("./index")
 async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
 ) {
 
-    if (!memory.users[event.source.userId]) memory.users[event.source.userId] = (await ref.child('users').child(event.source.userId).get()).val() || {}
+    if (!memory.users[event.source.userId]) memory.users[event.source.userId] = (await ref.child('users').child(event.source.userId).get()).val() || { test: true }
 
     if (event.type === 'follow') {
         client.linkRichMenuToUser(event.source.userId, richMenuAliasToId['start'])
@@ -12,7 +12,7 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
     }
 
     if (event.type === 'message' && event.message.type === 'text') {
-        return client.replyMessage(event.replyToken, { type: 'text', text: toString((await ref.child('users').child(event.source.userId).get()).val()) })
+        return client.replyMessage(event.replyToken, { type: 'text', text: JSON.stringify(memory.users) + "\n----\n" + (await ref.child('users').child(event.source.userId).get()).val() })
     }
 
     if (event.type === 'postback') {
@@ -34,7 +34,7 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
             memory.users[event.source.userId].lastchoose = args[4]
             memory.users[event.source.userId].choose_lock = false
             memory.users[event.source.userId].stage3++
-            run(event.source.userId,event.replyToken)
+            run(event.source.userId, event.replyToken)
         }
     }
 
