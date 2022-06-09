@@ -33,6 +33,11 @@ module.exports = {
     altText:require('./data/altText.json')
 }
 const { handleEvent } = require("./handleEvent")
+
+setInterval(() => {
+    ref.update(memory)
+}, 60000);
+
 const app = express()
 
 app.post('/linewebhook', line.middleware(config), (req, res) => {
