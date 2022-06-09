@@ -36,7 +36,6 @@ const { handleEvent } = require("./handleEvent")
 
 setInterval(() => {
     ref.child('users').update(memory.users)
-    console.log(memory.users)
 }, 30000);
 
 const app = express()

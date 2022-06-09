@@ -15,7 +15,11 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
         return client.replyMessage(event.replyToken, { type: 'text', text: JSON.stringify(memory.users) + "\n----\n" + (await ref.child('users').child(event.source.userId).get()).val() })
     }
 
-    if (event.type === 'postback') {
+    if (event.type === 'postback' && memory.users[event.source.userId].coldown !== true) {
+        memory.users[event.source.userId].coldown = true
+        setTimeout(() => {
+            memory.users[event.source.userId].coldown = false
+        }, 500)
         if (event.postback.data.startsWith('ui')) {
             if (event.postback.data === 'ui-start') {
                 client.linkRichMenuToUser(event.source.userId, richMenuAliasToId['next'])
@@ -27,13 +31,14 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
             }
         } else if (event.postback.data.startsWith('choose')) {
             const args = event.postback.data.split('-')
-            if (!memory.users[event.source.userId].choose_lock && !memory.users[event.source.userId].stage === args[1] && !memory.users[event.source.userId].stage2 === args[2] && !memory.users[event.source.userId].stage3 === args[3]) return
+            if (!memory.users[event.source.userId].choose_lock || !(memory.users[event.source.userId].stage === args[1]) || !(memory.users[event.source.userId].stage2 === Number(args[2])) || !(memory.users[event.source.userId].stage3 === Number(args[3]))) return
             const data_index = require(`./data/story/${args[1]}/index.json`)
-            const data = require(`./data/story/${args[1]}/${data_index[args[2]]}.json`)
+            const data = require(`./data/story/${args[1]}/${data_index[args[2]]}`)
             if (data[memory.users[event.source.userId].stage3].choose[args[4]].action) do_action(data[memory.users[event.source.userId].stage3].choose[args[4]].action)
-            memory.users[event.source.userId].lastchoose = args[4]
+            memory.users[event.source.userId].lastchoose = Number(args[4])
             memory.users[event.source.userId].choose_lock = false
             memory.users[event.source.userId].stage3++
+            client.linkRichMenuToUser(event.source.userId,richMenuAliasToId['next'])
             run(event.source.userId, event.replyToken)
         }
     }
@@ -94,15 +99,16 @@ function run(userId, replyToken) {
             break
         case 'choose': {
             let choose = []
-            for (const i of now.choose) {
+            now.choose.forEach((i,j) => {
                 choose.push({
-                    type: 'postback', label: i['display-text'], data: `choose-${user_data.stage}-${user_data.stage2}-${user_data.stage3}`, displayText: (() => {
+                    type: 'postback', label: i['display-text'], data: `choose-${user_data.stage}-${user_data.stage2}-${user_data.stage3}-${j}`, displayText: (() => {
                         if (i['send-text'] === undefined) return i['display-text']
                         if (i['send-text'] === '') return null
                         return i['send-text']
                     })()
                 })
-            }
+            })
+            
             client.replyMessage(replyToken, {
                 type: 'template', altText: altText, template: {
                     type: 'buttons',
