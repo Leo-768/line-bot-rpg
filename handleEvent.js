@@ -31,11 +31,11 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
             }
         } else if (event.postback.data.startsWith('choose')) {
             const args = event.postback.data.split('-')
-            if (!memory.users[event.source.userId].choose_lock || !(memory.users[event.source.userId].stage === args[1]) || !(memory.users[event.source.userId].stage2 === Number(args[2])) || !(memory.users[event.source.userId].stage3 === Number(args[3]))) return
+            if (!memory.users[event.source.userId].choose_lock || !(memory.users[event.source.userId].stage === args[1]) || !(memory.users[event.source.userId].stage2 === +args[2]) || !(memory.users[event.source.userId].stage3 === +args[3])) return
             const data_index = require(`./data/story/${args[1]}/index.json`)
             const data = require(`./data/story/${args[1]}/${data_index[args[2]]}`)
             if (data[memory.users[event.source.userId].stage3].choose[args[4]].action) do_action(data[memory.users[event.source.userId].stage3].choose[args[4]].action)
-            memory.users[event.source.userId].lastchoose = Number(args[4])
+            memory.users[event.source.userId].lastchoose = +args[4]
             memory.users[event.source.userId].choose_lock = false
             memory.users[event.source.userId].stage3++
             client.linkRichMenuToUser(event.source.userId,richMenuAliasToId['next'])
