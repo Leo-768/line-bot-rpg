@@ -1,8 +1,8 @@
-var memory = {}
+var memory = {users:{}}
 const line = require('@line/bot-sdk')
 const express = require('express')
 require('dotenv').config()
-const admin = require('firebase-admin');
+const admin = require('firebase-admin')
 admin.initializeApp({
     credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
@@ -10,7 +10,7 @@ admin.initializeApp({
         privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
     }),
     databaseURL: process.env.FIREBASE_DATABASE_URL
-  });
+  })
 
 const config = {
     channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
@@ -19,7 +19,7 @@ const config = {
 
 const messages = {}
 for (const iterator of require('./data/message/index.json')) {
-    messages[iterator.replace('.json','')] = require(`./data/message/${iterator}`)
+    messages[iterator] = require(`./data/message/${iterator}.json`)
 }
 
 const db = admin.database();
@@ -35,8 +35,9 @@ module.exports = {
 const { handleEvent } = require("./handleEvent")
 
 setInterval(() => {
-    ref.update(memory)
-}, 60000);
+    ref.child('users').update(memory.users)
+    console.log(memory.users)
+}, 30000);
 
 const app = express()
 

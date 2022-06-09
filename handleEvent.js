@@ -4,65 +4,62 @@ const { client, ref, memory, messages, altText } = require("./index")
 async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
 ) {
 
+    if (!memory.users[event.source.userId]) memory.users[event.source.userId] = (await ref.child('users').child(event.source.userId).get()).val() || {}
+
     if (event.type === 'follow') {
         client.linkRichMenuToUser(event.source.userId, richMenuAliasToId['start'])
         return client.replyMessage(event.replyToken, messages['welcome'])
     }
 
     if (event.type === 'message' && event.message.type === 'text') {
-        if (event.message.text === "666")
-            return client.linkRichMenuToUser(event.source.userId, richMenuAliasToId['next'])
-        await dataSetUp(event.source.userId)
-        return client.replyMessage(event.replyToken, { type: 'text', text: toString((await ref.child(event.source.userId).get()).val()) })
+        return client.replyMessage(event.replyToken, { type: 'text', text: toString((await ref.child('users').child(event.source.userId).get()).val()) })
     }
 
     if (event.type === 'postback') {
-        if (event.postback.data.startsWith('ui')){
+        if (event.postback.data.startsWith('ui')) {
             if (event.postback.data === 'ui-start') {
-                await dataSetUp(event.source.userId)
                 client.linkRichMenuToUser(event.source.userId, richMenuAliasToId['next'])
-                memory[event.source.userId] = { stage: 'begin', stage2: 0, stage3: 0 }
-                ref.child(event.source.userId).update(memory[event.source.userId])
+                memory.users[event.source.userId] = { stage: 'begin', stage2: 0, stage3: 0 }
+                ref.child(event.source.userId).update(memory.users[event.source.userId])
                 return run(event.source.userId, event.replyToken)
-                //client.replyMessage(event.replyToken, { type: 'text', text: '...' })//message(event.source.userId))
-            } else if (event.postback.data === 'ui-next' && !memory[event.source.userId].choose_lock) {
+            } else if (event.postback.data === 'ui-next' && !memory.users[event.source.userId].choose_lock) {
                 return run(event.source.userId, event.replyToken)
             }
-        }else if (event.postback.data.startsWith('choose')){
-            const args = event.postback.data.split('.')
-            if (!memory.stage === args[1] && !memory.stage2 === args[2] && !memory.stage3 === args[3] ) return
+        } else if (event.postback.data.startsWith('choose')) {
+            const args = event.postback.data.split('-')
+            if (!memory.users[event.source.userId].choose_lock && !memory.users[event.source.userId].stage === args[1] && !memory.users[event.source.userId].stage2 === args[2] && !memory.users[event.source.userId].stage3 === args[3]) return
             const data_index = require(`./data/story/${args[1]}/index.json`)
-            const data = require(`./data/story/${args[1]}/${args[2]}.json`)
+            const data = require(`./data/story/${args[1]}/${data_index[args[2]]}.json`)
+            if (data[memory.users[event.source.userId].stage3].choose[args[4]].action) do_action(data[memory.users[event.source.userId].stage3].choose[args[4]].action)
+            memory.users[event.source.userId].lastchoose = args[4]
+            memory.users[event.source.userId].choose_lock = false
+            memory.users[event.source.userId].stage3++
+            run(event.source.userId,event.replyToken)
         }
     }
 
-    return Promise.resolve(null);
+    return Promise.resolve(null)
 }
-
-async function dataSetUp(userId) {
-    if (!memory[userId]) memory[userId] = (await ref.child(userId).get()).val() || {}
-}
-
 
 function run(userId, replyToken) {
-    const user_data = JSON.parse(JSON.stringify(memory[userId]))
+    const user_data = JSON.parse(JSON.stringify(memory.users[userId]))
     const index = require(`./data/story/${user_data.stage}/index.json`)
     const data = require(`./data/story/${user_data.stage}/${index[user_data.stage2]}`)
-    //user_data.stage3++
-    if (!data[user_data.stage3]) {
-        memory[userId].stage2++
-        memory[userId].stage3 = 0
+    const now = data[user_data.stage3]
+    if (!now) {
+        memory.users[userId].stage2++
+        memory.users[userId].stage3 = 0
         return run(userId)
     }
     // 純字串解析
-    if (typeof data[user_data.stage3] === 'string') {
-        memory[userId].stage3++
-        return client.replyMessage(replyToken, { type: 'text', text: textVar(data[user_data.stage3], user_data) })
+    if (typeof now === 'string') {
+        memory.users[userId].stage3++
+        return client.replyMessage(replyToken, { type: 'text', text: textVar(now, user_data) })
     }
     // need 解析
-    if (data[user_data.stage3].need) {
+    if (now.need) {
         let success = true
-        for (let i of data[user_data.stage3].need) {
+        for (const i of now.need) {
             let variable = variable_path(user_data, i.variable)
             if (i.type === 'variable') {
                 if (!((i.equal === undefined || variable === i.equal) && (i.min === undefined || variable >= i.min) && (i.max === undefined || variable <= i.max))) {
@@ -72,7 +69,7 @@ function run(userId, replyToken) {
             }
         }
         if (!success) {
-            if (data[user_data.stage3].type === 'block-start') {
+            if (now.type === 'block-start') {
                 let i = user_data.stage3 + 1
                 let iterate = 1
                 while (iterate > 0) {
@@ -83,42 +80,46 @@ function run(userId, replyToken) {
                     }
                     i++
                 }
-                memory[userId].stage3 = i
+                memory.users[userId].stage3 = i
             } else {
-                memory[userId].stage3++
+                memory.users[userId].stage3++
             }
             return run(userId, replyToken)
         }
     }
-    switch (data[user_data.stage3].type) {
+    switch (now.type) {
         case 'text':
-            client.replyMessage(replyToken, { type: 'text', text: textVar(data[user_data.stage3].text, user_data) })
-            memory[userId].stage3++
+            client.replyMessage(replyToken, { type: 'text', text: textVar(now.text, user_data) })
+            memory.users[userId].stage3++
             break
-        case 'choose':
-            {
-                let choose = []
-                for (const i of data[user_data.stage3].choose) {
-                    choose.push({
-                        type: 'postback', label: i['display-text'], data: `choose-${user_data.stage}-${user_data.stage2}-${user_data.stage3}`, displayText: (() => {
-                            if (i['send-text'] === undefined) return i['display-text']
-                            if (i['send-text'] === '') return null
-                            return i['send-text']
-                        })()
-                    })
-                }
-                client.replyMessage(replyToken, {
-                    type: 'template', altText: altText, template: {
-                        type: 'buttons',
-                        text: data[user_data.stage3].text,
-                        actions: choose
-                    }
+        case 'choose': {
+            let choose = []
+            for (const i of now.choose) {
+                choose.push({
+                    type: 'postback', label: i['display-text'], data: `choose-${user_data.stage}-${user_data.stage2}-${user_data.stage3}`, displayText: (() => {
+                        if (i['send-text'] === undefined) return i['display-text']
+                        if (i['send-text'] === '') return null
+                        return i['send-text']
+                    })()
                 })
-                memory[userId].choose_lock = true
             }
+            client.replyMessage(replyToken, {
+                type: 'template', altText: altText, template: {
+                    type: 'buttons',
+                    text: now.text,
+                    actions: choose
+                }
+            })
+            client.unlinkRichMenuFromUser(userId)
+            memory.users[userId].choose_lock = true
+        }
         default:
             break
     }
+}
+
+function do_action(actions) {
+    return
 }
 
 function textVar(text, variable) {
@@ -126,10 +127,10 @@ function textVar(text, variable) {
 }
 
 function variable_path(variable, path) {
-    for (let i of path.split('.')) {
+    for (const i of path.split('.')) {
         variable = variable[i]
     }
     return variable
 }
 
-exports.handleEvent = handleEvent;
+exports.handleEvent = handleEvent

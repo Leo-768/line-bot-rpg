@@ -11,15 +11,15 @@ const config = {
 async function setUp(){
     const client = new line.Client(config)
     const oldRichmenuIds = await client.getRichMenuList()
-    for (i=0;i<oldRichmenuIds.length;i++){
+    for (const i=0;i<oldRichmenuIds.length;i++){
         await client.deleteRichMenu(oldRichmenuIds[i].richMenuId)
     }
     const oldRichmenuAlias = await client.getRichMenuAliasList()
-    for (i=0;i<oldRichmenuAlias.aliases.length;i++){
+    for (const i=0;i<oldRichmenuAlias.aliases.length;i++){
         await client.deleteRichMenuAlias(oldRichmenuAlias.aliases[i].richMenuAliasId)
     }
     let richMenuId = ""
-    for (let i=0;i<richMenuSets.length;i++){
+    for (const i=0;i<richMenuSets.length;i++){
         richMenuId = await client.createRichMenu(require('./data/'+richMenuSets[i].setting))
         await client.setRichMenuImage(richMenuId, fs.createReadStream('./data/'+richMenuSets[i].image))
         await client.createRichMenuAlias(richMenuId, richMenuSets[i].id)
@@ -27,7 +27,7 @@ async function setUp(){
 
     var aliasToId = {}
     const datas = (await client.getRichMenuAliasList()).aliases
-    for (let i = 0; i < datas.length; i++) {
+    for (const i = 0; i < datas.length; i++) {
         aliasToId[datas[i].richMenuAliasId] = datas[i].richMenuId
     }
     return aliasToId
