@@ -1,6 +1,6 @@
 const line = require('@line/bot-sdk');
 const fs = require('fs');
-const richMenuSets = require('./sets.json')
+const richMenuSets = require(__dirname + '/sets.json')
 require('dotenv').config()
 
 const config = {
@@ -32,8 +32,8 @@ async function setUp() {
     }
     let richMenuId = ""
     for (let i = 0; i < richMenuSets.length; i++) {
-        richMenuId = await client.createRichMenu(require('./data/' + richMenuSets[i].setting))
-        await client.setRichMenuImage(richMenuId, fs.createReadStream('./data/' + richMenuSets[i].image))
+        richMenuId = await client.createRichMenu(require(__dirname + '/data/' + richMenuSets[i].setting))
+        await client.setRichMenuImage(richMenuId, fs.createReadStream(__dirname + '/data/' + richMenuSets[i].image))
         await client.createRichMenuAlias(richMenuId, richMenuSets[i].id)
     }
 
