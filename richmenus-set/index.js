@@ -42,11 +42,10 @@ async function setUp() {
     for (let i = 0; i < datas.length; i++) {
         aliasToId[datas[i].richMenuAliasId] = datas[i].richMenuId
     }
-    return aliasToId
-
+    await ref.child('richmenus').set(aliasToId)
+    console.log(aliasToId)
+    admin.app().delete()
 }
 
 
-setUp().then(datas => {
-    ref.child('richmenus').set(datas).then(() => { console.log(JSON.stringify(datas)) })
-})
+setUp().then()
