@@ -141,7 +141,7 @@ function run(userId, replyToken) {
                     break
 
                 default:{
-                    const url = process.env.URL + now.image
+                    const url = process.env.URL + '/file/' + now.image
                     client.replyMessage(replyToken, {
                         type: 'image',
                         originalContentUrl: url,
