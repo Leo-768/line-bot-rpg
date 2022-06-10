@@ -52,7 +52,7 @@ function run(userId, replyToken) {
     if (!now) {
         memory.users[userId].stage2++
         memory.users[userId].stage3 = 0
-        return run(userId)
+        return run(userId,replyToken)
     }
     // 純字串解析
     if (typeof now === 'string') {
