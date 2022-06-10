@@ -1,14 +1,13 @@
-const richMenuAliasToId = require('./data/richMenus.json')
-const { client, ref, memory, messages, altText } = require("./index")
+const { client, ref, memory, data } = require("./index")
 
 async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
 ) {
 
-    if (!memory.users[event.source.userId]) memory.users[event.source.userId] = (await ref.child('users').child(event.source.userId).get()).val() || { test: true }
+    if (!memory.users[event.source.userId]) memory.users[event.source.userId] = (await ref.child('users').child(event.source.userId).get()).val() || {}
 
     if (event.type === 'follow') {
-        client.linkRichMenuToUser(event.source.userId, richMenuAliasToId['start'])
-        return client.replyMessage(event.replyToken, messages['welcome'])
+        client.linkRichMenuToUser(event.source.userId, memory.richmenus['start'])
+        return client.replyMessage(event.replyToken, data.messages['welcome'])
     }
 
     if (event.type === 'message' && event.message.type === 'text') {
@@ -22,9 +21,8 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
         }, 500)
         if (event.postback.data.startsWith('ui')) {
             if (event.postback.data === 'ui-start') {
-                client.linkRichMenuToUser(event.source.userId, richMenuAliasToId['next'])
+                client.linkRichMenuToUser(event.source.userId, memory.richmenus['next'])
                 memory.users[event.source.userId] = { stage: 'begin', stage2: 0, stage3: 0 }
-                ref.child(event.source.userId).update(memory.users[event.source.userId])
                 return run(event.source.userId, event.replyToken)
             } else if (event.postback.data === 'ui-next' && !memory.users[event.source.userId].choose_lock) {
                 return run(event.source.userId, event.replyToken)
@@ -33,12 +31,12 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
             const args = event.postback.data.split('-')
             if (!memory.users[event.source.userId].choose_lock || !(memory.users[event.source.userId].stage === args[1]) || !(memory.users[event.source.userId].stage2 === +args[2]) || !(memory.users[event.source.userId].stage3 === +args[3])) return
             const data_index = require(`./data/story/${args[1]}/index.json`)
-            const data = require(`./data/story/${args[1]}/${data_index[args[2]]}`)
-            if (data[memory.users[event.source.userId].stage3].choose[args[4]].action) do_action(data[memory.users[event.source.userId].stage3].choose[args[4]].action, event.source.userId)
+            const story = require(`./data/story/${args[1]}/${data_index[args[2]]}`)
+            if (story[memory.users[event.source.userId].stage3].choose[args[4]].action) do_action(story[memory.users[event.source.userId].stage3].choose[args[4]].action, event.source.userId)
             memory.users[event.source.userId].lastchoose = +args[4]
             memory.users[event.source.userId].choose_lock = false
             memory.users[event.source.userId].stage3++
-            client.linkRichMenuToUser(event.source.userId, richMenuAliasToId['next'])
+            client.linkRichMenuToUser(event.source.userId, memory.richmenus['next'])
             run(event.source.userId, event.replyToken)
         }
     }
@@ -49,8 +47,8 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
 function run(userId, replyToken) {
     const user_data = JSON.parse(JSON.stringify(memory.users[userId]))
     const index = require(`./data/story/${user_data.stage}/index.json`)
-    const data = require(`./data/story/${user_data.stage}/${index[user_data.stage2]}`)
-    const now = data[user_data.stage3]
+    const story = require(`./data/story/${user_data.stage}/${index[user_data.stage2]}`)
+    const now = story[user_data.stage3]
     if (!now) {
         memory.users[userId].stage2++
         memory.users[userId].stage3 = 0
@@ -78,9 +76,9 @@ function run(userId, replyToken) {
                 let i = user_data.stage3 + 1
                 let iterate = 1
                 while (iterate > 0) {
-                    if (data[i].type === 'block-end') {
+                    if (story[i].type === 'block-end') {
                         iterate--
-                    } else if (data[i].type === 'block-start') {
+                    } else if (story[i].type === 'block-start') {
                         iterate++
                     }
                     i++
@@ -104,7 +102,7 @@ function run(userId, replyToken) {
             }]
             now.choose.forEach((i, j) => {
                 choose.push({
-                    type:'button',
+                    type: 'button',
                     action: {
                         type: 'postback', label: i['display-text'], data: `choose-${user_data.stage}-${user_data.stage2}-${user_data.stage3}-${j}`, displayText: (() => {
                             if (i['send-text'] === undefined) return i['display-text']
@@ -121,7 +119,7 @@ function run(userId, replyToken) {
             })
             client.replyMessage(replyToken, {
                 type: 'flex',
-                altText: 'this is a flex message',
+                altText: data.altText,
                 contents: {
                     type: 'bubble',
                     size: 'giga',
@@ -136,7 +134,7 @@ function run(userId, replyToken) {
             memory.users[userId].choose_lock = true
             break
         }
-        case 'image':{
+        case 'image': {
             switch (now.image.type) {
                 case '':
 
@@ -150,7 +148,8 @@ function run(userId, replyToken) {
                     })
                     memory.users[userId].stage3++
                     break
-            }}
+            }
+        }
         default:
             memory.users[userId].stage3++
             break
@@ -164,7 +163,7 @@ function do_action(actions, userId) {
     for (const iterator of actions) {
         switch (iterator) {
             case 'linkrichmenu':
-                client.linkRichMenuToUser(userId, richMenuAliasToId[iterator.menu])
+                client.linkRichMenuToUser(userId, memory.richmenus[iterator.menu])
                 break
             case 'unlinkrichmenu':
                 client.unlinkRichMenuFromUser(userId)
