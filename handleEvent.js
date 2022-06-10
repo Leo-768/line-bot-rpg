@@ -140,14 +140,16 @@ function run(userId, replyToken) {
 
                     break
 
-                default:
+                default:{
+                    const url = process.env.URL + now.image
                     client.replyMessage(replyToken, {
                         type: 'image',
-                        originalContentUrl: now.url,
-                        previewImageUrl: now.url
+                        originalContentUrl: url,
+                        previewImageUrl: url
                     })
                     memory.users[userId].stage3++
                     break
+                }
             }
         }
         default:
