@@ -51,7 +51,7 @@ async function main() {
     })
 
     app.get('/file/:name',(req,res)=>{
-        res.sendFile('/file/'+req.params.name)
+        res.sendFile(__dirname+'/file/'+req.params.name)
     })
 
     app.listen(process.env.PORT || 5000, () => {
