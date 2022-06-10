@@ -71,6 +71,7 @@ function run(userId, replyToken) {
                 }
             }
         }
+        if (now.not) success = !success
         if (!success) {
             if (now.type === 'block-start') {
                 let i = user_data.stage3 + 1
