@@ -50,6 +50,10 @@ async function main() {
             })
     })
 
+    app.get('/file/:name',(req,res)=>{
+        res.sendFile('./file/'+req.params.name)
+    })
+
     app.listen(process.env.PORT || 5000, () => {
         console.log('on')
     })
