@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "@line/bot-sdk": "^7.5.0",
     "dotenv": "^16.0.1",
