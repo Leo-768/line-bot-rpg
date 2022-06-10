@@ -34,11 +34,11 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
             if (!memory.users[event.source.userId].choose_lock || !(memory.users[event.source.userId].stage === args[1]) || !(memory.users[event.source.userId].stage2 === +args[2]) || !(memory.users[event.source.userId].stage3 === +args[3])) return
             const data_index = require(`./data/story/${args[1]}/index.json`)
             const data = require(`./data/story/${args[1]}/${data_index[args[2]]}`)
-            if (data[memory.users[event.source.userId].stage3].choose[args[4]].action) do_action(data[memory.users[event.source.userId].stage3].choose[args[4]].action)
+            if (data[memory.users[event.source.userId].stage3].choose[args[4]].action) do_action(data[memory.users[event.source.userId].stage3].choose[args[4]].action, event.source.userId)
             memory.users[event.source.userId].lastchoose = +args[4]
             memory.users[event.source.userId].choose_lock = false
             memory.users[event.source.userId].stage3++
-            client.linkRichMenuToUser(event.source.userId,richMenuAliasToId['next'])
+            client.linkRichMenuToUser(event.source.userId, richMenuAliasToId['next'])
             run(event.source.userId, event.replyToken)
         }
     }
@@ -98,41 +98,87 @@ function run(userId, replyToken) {
             memory.users[userId].stage3++
             break
         case 'choose': {
-            let choose = []
-            now.choose.forEach((i,j) => {
+            let choose = [{
+                type: 'separator',
+                margin: 'xs'
+            }]
+            now.choose.forEach((i, j) => {
                 choose.push({
-                    type: 'postback', label: i['display-text'], data: `choose-${user_data.stage}-${user_data.stage2}-${user_data.stage3}-${j}`, displayText: (() => {
-                        if (i['send-text'] === undefined) return i['display-text']
-                        if (i['send-text'] === '') return null
-                        return i['send-text']
-                    })()
+                    type:'button',
+                    action: {
+                        type: 'postback', label: i['display-text'], data: `choose-${user_data.stage}-${user_data.stage2}-${user_data.stage3}-${j}`, displayText: (() => {
+                            if (i['send-text'] === undefined) return i['display-text']
+                            if (i['send-text'] === '') return null
+                            return i['send-text']
+                        })()
+                    },
+                    style: 'secondary'
+                })
+                choose.push({
+                    type: 'separator',
+                    margin: 'xs'
                 })
             })
-            
             client.replyMessage(replyToken, {
-                type: 'template', altText: altText, template: {
+                type: 'flex',
+                altText: 'this is a flex message',
+                contents: {
                     type: 'bubble',
+                    size: 'giga',
                     body: {
-                        type:'box'
+                        type: 'box',
+                        layout: 'vertical',
+                        contents: choose
                     }
                 }
             })
             client.unlinkRichMenuFromUser(userId)
             memory.users[userId].choose_lock = true
-        }
-        case 'image':
-            client.replyMessage(replyToken,{
-                type:'image',
-                originalContentUrl: now.url,
-                previewImageUrl: now.url
-            })
-            memory.users[userId].stage3++
-        default:
             break
+        }
+        case 'image':{
+            switch (now.image.type) {
+                case '':
+
+                    break
+
+                default:
+                    client.replyMessage(replyToken, {
+                        type: 'image',
+                        originalContentUrl: now.url,
+                        previewImageUrl: now.url
+                    })
+                    memory.users[userId].stage3++
+                    break
+            }}
+        default:
+            memory.users[userId].stage3++
+            break
+    }
+    if (now.action) {
+        do_action(action, userId)
     }
 }
 
-function do_action(actions) {
+function do_action(actions, userId) {
+    for (const iterator of actions) {
+        switch (iterator) {
+            case 'linkrichmenu':
+                client.linkRichMenuToUser(userId, richMenuAliasToId[iterator.menu])
+                break
+            case 'unlinkrichmenu':
+                client.unlinkRichMenuFromUser(userId)
+                break
+            case 'varset':
+                memory.users[userId].var[iterator.var] = iterator.set
+                return
+            case 'varadd':
+                memory.users[userId].var[iterator.var] += iterator.add
+                return
+            default:
+                break
+        }
+    }
     return
 }
 
