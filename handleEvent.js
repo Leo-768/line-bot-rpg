@@ -15,10 +15,10 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
         return client.replyMessage(event.replyToken, { type: 'text', text: JSON.stringify(memory.users) + "\n----\n" + (await ref.child('users').child(event.source.userId).get()).val() })
     }
 
-    if (event.type === 'postback' && memory.users[event.source.userId].coldown !== true) {
-        memory.users[event.source.userId].coldown = true
+    if (event.type === 'postback' && memory.coldown[event.source.userId] !== true) {
+        memory.coldown[event.source.userId] = true
         setTimeout(() => {
-            memory.users[event.source.userId].coldown = false
+            memory.coldown[event.source.userId] = false
         }, 500)
         if (event.postback.data.startsWith('ui')) {
             if (event.postback.data === 'ui-start') {
@@ -111,14 +111,22 @@ function run(userId, replyToken) {
             
             client.replyMessage(replyToken, {
                 type: 'template', altText: altText, template: {
-                    type: 'buttons',
-                    text: now.text,
-                    actions: choose
+                    type: 'bubble',
+                    body: {
+                        type:'box'
+                    }
                 }
             })
             client.unlinkRichMenuFromUser(userId)
             memory.users[userId].choose_lock = true
         }
+        case 'image':
+            client.replyMessage(replyToken,{
+                type:'image',
+                originalContentUrl: now.url,
+                previewImageUrl: now.url
+            })
+            memory.users[userId].stage3++
         default:
             break
     }
