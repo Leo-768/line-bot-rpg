@@ -111,6 +111,7 @@ function run(userId, replyToken) {
                     action: {
                         type: 'postback', label: textVar(i['display-text'], memory), data: `choose-${user_data.stage}-${user_data.stage2}-${user_data.stage3}-${j}`, displayText: (() => {
                             if (i['send-text'] === undefined) return textVar(i['display-text'], memory)
+                            if (i['send-text'] === '') return undefined
                             return textVar(i['send-text'], memory)
                         })()
                     },
