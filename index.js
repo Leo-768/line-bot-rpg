@@ -54,7 +54,7 @@ async function main() {
         res.sendFile(__dirname + '/data/file/' + req.params.name)
     })
 
-    app.listen(process.env.PORT || 5000, () => {
+    app.listen(process.env.PORT || 3000, () => {
         console.log('on')
     })
 }
