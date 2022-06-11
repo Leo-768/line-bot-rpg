@@ -52,7 +52,7 @@ function run(userId, replyToken) {
     if (!now) {
         memory.users[userId].stage2++
         memory.users[userId].stage3 = 0
-        return run(userId,replyToken)
+        return run(userId, replyToken)
     }
     // 純字串解析
     if (typeof now === 'string') {
@@ -141,7 +141,7 @@ function run(userId, replyToken) {
 
                     break
 
-                default:{
+                default: {
                     const url = process.env.URL + '/file/' + now.image
                     client.replyMessage(replyToken, {
                         type: 'image',

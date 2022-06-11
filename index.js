@@ -31,7 +31,7 @@ async function main() {
     exports.client = client
     exports.ref = ref
     exports.memory = memory
-    exports.data = {messages:messages,altText:require('./data/altText.json')}
+    exports.data = { messages: messages, altText: require('./data/altText.json') }
     const { handleEvent } = require("./handleEvent.js")
 
     setInterval(() => {
@@ -50,8 +50,8 @@ async function main() {
             })
     })
 
-    app.get('/file/:name',(req,res)=>{
-        res.sendFile(__dirname+'/data/file/'+req.params.name)
+    app.get('/file/:name', (req, res) => {
+        res.sendFile(__dirname + '/data/file/' + req.params.name)
     })
 
     app.listen(process.env.PORT || 5000, () => {
