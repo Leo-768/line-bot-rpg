@@ -154,6 +154,7 @@ function run(userId, replyToken) {
                     memory.users[userId].stage3++
                     break
             }
+            break
         }
         default:
             memory.users[userId].stage3++
