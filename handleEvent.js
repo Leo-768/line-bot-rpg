@@ -136,13 +136,13 @@ function run(userId, replyToken) {
             break
         }
         case 'image': {
+            const url = process.env.URL + '/file/' + now.image
             switch (now.image.type) {
                 case '':
 
                     break
 
-                default: {
-                    const url = process.env.URL + '/file/' + now.image
+                default: 
                     client.replyMessage(replyToken, {
                         type: 'image',
                         originalContentUrl: url,
@@ -150,7 +150,6 @@ function run(userId, replyToken) {
                     })
                     memory.users[userId].stage3++
                     break
-                }
             }
         }
         default:
