@@ -1,6 +1,5 @@
 const line = require('@line/bot-sdk');
 const fs = require('fs');
-const richMenuSets = require(__dirname + '/sets.json')
 require('dotenv').config()
 
 const config = {
@@ -20,7 +19,8 @@ admin.initializeApp({
 const db = admin.database();
 const ref = db.ref('/');
 
-async function setUp() {
+async function richmenusetup() {
+    const richMenuSets = require(__dirname + '/richmenus-set/index.json')
     const client = new line.Client(config)
     const oldRichmenuIds = await client.getRichMenuList()
     for (let i = 0; i < oldRichmenuIds.length; i++) {
@@ -32,8 +32,8 @@ async function setUp() {
     }
     let richMenuId = ""
     for (let i = 0; i < richMenuSets.length; i++) {
-        richMenuId = await client.createRichMenu(require(__dirname + '/data/' + richMenuSets[i].setting))
-        await client.setRichMenuImage(richMenuId, fs.createReadStream(__dirname + '/data/' + richMenuSets[i].image))
+        richMenuId = await client.createRichMenu(require(__dirname + '/richmenus-set/' + richMenuSets[i].setting))
+        await client.setRichMenuImage(richMenuId, fs.createReadStream(__dirname + '/richmenus-set/' + richMenuSets[i].image))
         await client.createRichMenuAlias(richMenuId, richMenuSets[i].id)
     }
 
@@ -44,8 +44,23 @@ async function setUp() {
     }
     await ref.child('richmenus').set(aliasToId)
     console.log(aliasToId)
-    admin.app().delete()
 }
 
+async function taglist() {
+    let tags = {}
+    for (const story of require(__dirname + '/../data/story/index.json')) {
+        require(__dirname + `/../data/story/${story}/index.json`).forEach((v, i) => {
+            require(__dirname + `/../data/story/${story}/${v}`).forEach((now, j) => {
+                if (now.type === 'tag') {
+                    tags[now.tag] = { stage: story, stage2: i, stage3: k }
+                }
+            })
+        })
+    }
+    await ref.child('tags').set(tags)
+    console.log(tags)
+}
 
-setUp().then()
+Promise.all([richmenusetup(),taglist()]).then(() => {
+    admin.app().delete()
+})

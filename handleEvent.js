@@ -163,7 +163,7 @@ function run(userId, replyToken) {
 
 function do_action(actions, userId) {
     for (const iterator of actions) {
-        switch (iterator) {
+        switch (iterator.type) {
             case 'linkrichmenu':
                 client.linkRichMenuToUser(userId, data.richmenus[iterator.menu])
                 break
@@ -171,13 +171,13 @@ function do_action(actions, userId) {
                 client.unlinkRichMenuFromUser(userId)
                 break
             case 'varset':
-                memory.users[userId].var[iterator.var] = iterator.set
+                path_variable(memory.users[userId],iterator.var,iterator.set)
                 return
             case 'varadd':
-                memory.users[userId].var[iterator.var] += iterator.add
+                path_variable(memory.users[userId],iterator.var,iterator.add,true)
                 return
             case 'jump':
-                switch (iterator.stage) {
+                switch (iterator.jump) {
                     case 1:
                         memory.users[userId].stage = iterator.set
                         memory.users[userId].stage2 = 0
@@ -188,9 +188,10 @@ function do_action(actions, userId) {
                         memory.users[userId].stage2 = 0
                     case 3:
                         memory.users[userId].stage3 = iterator.set
-                    case 'tag':
-                        data
                     default:
+                        memory.users[userId].stage = data.tags[iterator.jump].stage
+                        memory.users[userId].stage2 = data.tags[iterator.jump].stage2
+                        memory.users[userId].stage3 = data.tags[iterator.jump].stage3
                         break
                 }
             default:
@@ -204,9 +205,10 @@ function textVar(text, variable) {
     return text.replace(/%(.*?)%/g, (match, p1, offset, string) => { return path_variable(variable, p1) }).replaceAll(':percent-sign:', '%')
 }
 
-function path_variable(variable,path,set){
+function path_variable(variable,path,set,add){
     if (typeof set === 'undefined') return new Function('variable',`return variable["${path.replace('.','"]["')}"]`)(variable)
-    new Function('variable','set',`variable["${path.replace('.','"]["')}"]=set`)(variable,set)
+    if (add) return new Function('variable','set',`variable["${path.replace('.','"]["')}"]+=set`)(variable,set)
+    return new Function('variable','set',`variable["${path.replace('.','"]["')}"]=set`)(variable,set)
 }
 
 
