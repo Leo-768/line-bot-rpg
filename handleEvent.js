@@ -34,7 +34,7 @@ async function handleEvent(event) {
             const story = require(`./data/story/${args[1]}/${data_index[args[2]]}`)
             memory.users[event.source.userId].lastchoose = +args[4]
             memory.users[event.source.userId].choose_lock = false
-            client.linkRichMenuToUser(event.source.userId, data.richmenus['next'])
+            await client.linkRichMenuToUser(event.source.userId, data.richmenus['next'])
             if (story[memory.users[event.source.userId].stage3].choose[args[4]].action) {
                 do_action(story[memory.users[event.source.userId].stage3].choose[args[4]].action, event.source.userId)
             } else {
