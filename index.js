@@ -27,11 +27,11 @@ async function main() {
     const db = admin.database();
     const ref = db.ref('/');
     const client = new line.Client(config)
-    memory.richmenus = (await ref.child('richmenus').get()).val()
     exports.client = client
     exports.ref = ref
     exports.memory = memory
-    exports.data = { messages: messages, altText: require('./data/altText.json') }
+    const data = { messages: messages, altText: require('./data/altText.json'), richmenus: (await ref.child('richmenus').get()).val(), tags: require('./data/story/tags.json') }
+    exports.data = data
     const { handleEvent } = require("./handleEvent.js")
 
     setInterval(() => {

@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "node index.js",
-    "build": "node richmenus-set/index.js"
+    "build": "node setup/richmenus-set/index.js"
   },
   "dependencies": {
     "@line/bot-sdk": "^7.5.0",

@@ -6,7 +6,7 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
     if (!memory.users[event.source.userId]) memory.users[event.source.userId] = (await ref.child('users').child(event.source.userId).get()).val() || {}
 
     if (event.type === 'follow') {
-        client.linkRichMenuToUser(event.source.userId, memory.richmenus['start'])
+        client.linkRichMenuToUser(event.source.userId, data.richmenus['start'])
         return client.replyMessage(event.replyToken, data.messages['welcome'])
     }
 
@@ -21,7 +21,7 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
         }, 500)
         if (event.postback.data.startsWith('ui')) {
             if (event.postback.data === 'ui-start') {
-                client.linkRichMenuToUser(event.source.userId, memory.richmenus['next'])
+                client.linkRichMenuToUser(event.source.userId, data.richmenus['next'])
                 memory.users[event.source.userId] = { stage: 'begin', stage2: 0, stage3: 0 }
                 return run(event.source.userId, event.replyToken)
             } else if (event.postback.data === 'ui-next' && !memory.users[event.source.userId].choose_lock) {
@@ -36,7 +36,7 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
             memory.users[event.source.userId].lastchoose = +args[4]
             memory.users[event.source.userId].choose_lock = false
             memory.users[event.source.userId].stage3++
-            client.linkRichMenuToUser(event.source.userId, memory.richmenus['next'])
+            client.linkRichMenuToUser(event.source.userId, data.richmenus['next'])
             run(event.source.userId, event.replyToken)
         }
     }
@@ -63,15 +63,16 @@ function run(userId, replyToken) {
     if (now.need) {
         let success = true
         for (const i of now.need) {
-            let variable = variable_path(user_data, i.variable)
+            let variable = path_variable(user_data, i.variable)
             if (i.type === 'variable') {
-                if (!((i.equal === undefined || variable === i.equal) && (i.min === undefined || variable >= i.min) && (i.max === undefined || variable <= i.max))) {
-                    success = false
-                    break
+                if (((i.equal === undefined || variable === i.equal) && (i.min === undefined || variable >= i.min) && (i.max === undefined || variable <= i.max))) {
+                    success = !i.not
+                }else{
+                    success = !!i.not
                 }
             }
+            if (!success) break
         }
-        if (now.not) success = !success
         if (!success) {
             if (now.type === 'block-start') {
                 let i = user_data.stage3 + 1
@@ -141,7 +142,6 @@ function run(userId, replyToken) {
                 case '':
 
                     break
-
                 default: 
                     client.replyMessage(replyToken, {
                         type: 'image',
@@ -165,7 +165,7 @@ function do_action(actions, userId) {
     for (const iterator of actions) {
         switch (iterator) {
             case 'linkrichmenu':
-                client.linkRichMenuToUser(userId, memory.richmenus[iterator.menu])
+                client.linkRichMenuToUser(userId, data.richmenus[iterator.menu])
                 break
             case 'unlinkrichmenu':
                 client.unlinkRichMenuFromUser(userId)
@@ -176,6 +176,23 @@ function do_action(actions, userId) {
             case 'varadd':
                 memory.users[userId].var[iterator.var] += iterator.add
                 return
+            case 'jump':
+                switch (iterator.stage) {
+                    case 1:
+                        memory.users[userId].stage = iterator.set
+                        memory.users[userId].stage2 = 0
+                        memory.users[userId].stage3 = 0
+                        break
+                    case 2:
+                        memory.users[userId].stage = iterator.set
+                        memory.users[userId].stage2 = 0
+                    case 3:
+                        memory.users[userId].stage3 = iterator.set
+                    case 'tag':
+                        data
+                    default:
+                        break
+                }
             default:
                 break
         }
@@ -184,14 +201,13 @@ function do_action(actions, userId) {
 }
 
 function textVar(text, variable) {
-    return text.replace(/%(.*?)%/g, (match, p1, offset, string) => { return variable_path(variable, p1) }).replaceAll(':percent-sign:', '%')
+    return text.replace(/%(.*?)%/g, (match, p1, offset, string) => { return path_variable(variable, p1) }).replaceAll(':percent-sign:', '%')
 }
 
-function variable_path(variable, path) {
-    for (const i of path.split('.')) {
-        variable = variable[i]
-    }
-    return variable
+function path_variable(variable,path,set){
+    if (typeof set === 'undefined') return new Function('variable',`return variable["${path.replace('.','"]["')}"]`)(variable)
+    new Function('variable','set',`variable["${path.replace('.','"]["')}"]=set`)(variable,set)
 }
+
 
 exports.handleEvent = handleEvent
