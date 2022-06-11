@@ -157,6 +157,7 @@ function run(userId, replyToken) {
         }
         default:
             memory.users[userId].stage3++
+            run(userId, replyToken)
             break
     }
     if (now.action) {
