@@ -21,7 +21,7 @@ async function handleEvent(event) {
         }, 500)
         if (event.postback.data.startsWith('ui')) {
             if (event.postback.data === 'ui-start') {
-                await client.linkRichMenuToUser(event.source.userId, data.richmenus['next'])
+                client.linkRichMenuToUser(event.source.userId, data.richmenus['next'])
                 memory.users[event.source.userId] = { stage: 'begin', stage2: 0, stage3: 0 }
                 return run(event.source.userId, event.replyToken)
             } else if (event.postback.data === 'ui-next' && !memory.users[event.source.userId].choose_lock) {
