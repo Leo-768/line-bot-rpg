@@ -52,7 +52,7 @@ async function taglist() {
         require(__dirname + `/../data/story/${story}/index.json`).forEach((v, i) => {
             require(__dirname + `/../data/story/${story}/${v}`).forEach((now, j) => {
                 if (now.type === 'tag') {
-                    tags[now.tag] = { stage: story, stage2: i, stage3: k }
+                    tags[now.tag] = { stage: story, stage2: i, stage3: j }
                 }
             })
         })
