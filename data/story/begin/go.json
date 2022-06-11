@@ -1,4 +1,7 @@
 [
     "走吧",
-    "-------"
+    "-------",
+    {"type":"tag","tag":"set"},
+    {"type":"choose","choose":[{"display-text":"hi~"},{"display-text":"...","send-text":"","action":[{"type":"jump","jump":"stage3","add":-1}]}]},
+    "ouo"
 ]

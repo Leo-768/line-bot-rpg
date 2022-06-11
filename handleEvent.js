@@ -32,11 +32,14 @@ async function handleEvent(event//:import('@line/bot-sdk').WebhookEvent
             if (!memory.users[event.source.userId].choose_lock || !(memory.users[event.source.userId].stage === args[1]) || !(memory.users[event.source.userId].stage2 === +args[2]) || !(memory.users[event.source.userId].stage3 === +args[3])) return
             const data_index = require(`./data/story/${args[1]}/index.json`)
             const story = require(`./data/story/${args[1]}/${data_index[args[2]]}`)
-            if (story[memory.users[event.source.userId].stage3].choose[args[4]].action) do_action(story[memory.users[event.source.userId].stage3].choose[args[4]].action, event.source.userId)
             memory.users[event.source.userId].lastchoose = +args[4]
             memory.users[event.source.userId].choose_lock = false
-            memory.users[event.source.userId].stage3++
             client.linkRichMenuToUser(event.source.userId, data.richmenus['next'])
+            if (story[memory.users[event.source.userId].stage3].choose[args[4]].action) {
+                do_action(story[memory.users[event.source.userId].stage3].choose[args[4]].action, event.source.userId)
+            } else {
+                memory.users[event.source.userId].stage3++
+            }
             run(event.source.userId, event.replyToken)
         }
     }
@@ -67,7 +70,7 @@ function run(userId, replyToken) {
             if (i.type === 'variable') {
                 if (((i.equal === undefined || variable === i.equal) && (i.min === undefined || variable >= i.min) && (i.max === undefined || variable <= i.max))) {
                     success = !i.not
-                }else{
+                } else {
                     success = !!i.not
                 }
             }
@@ -106,10 +109,10 @@ function run(userId, replyToken) {
                 choose.push({
                     type: 'button',
                     action: {
-                        type: 'postback', label: i['display-text'], data: `choose-${user_data.stage}-${user_data.stage2}-${user_data.stage3}-${j}`, displayText: (() => {
-                            if (i['send-text'] === undefined) return i['display-text']
+                        type: 'postback', label: textVar(i['display-text'], memory), data: `choose-${user_data.stage}-${user_data.stage2}-${user_data.stage3}-${j}`, displayText: (() => {
+                            if (i['send-text'] === undefined) return textVar(i['display-text'], memory)
                             if (i['send-text'] === '') return null
-                            return i['send-text']
+                            return textVar(i['send-text'], memory)
                         })()
                     },
                     style: 'secondary'
@@ -142,7 +145,7 @@ function run(userId, replyToken) {
                 case '':
 
                     break
-                default: 
+                default:
                     client.replyMessage(replyToken, {
                         type: 'image',
                         originalContentUrl: url,
@@ -157,7 +160,7 @@ function run(userId, replyToken) {
             break
     }
     if (now.action) {
-        do_action(action, userId)
+        do_action(now.action, userId)
     }
 }
 
@@ -171,29 +174,32 @@ function do_action(actions, userId) {
                 client.unlinkRichMenuFromUser(userId)
                 break
             case 'varset':
-                path_variable(memory.users[userId],iterator.var,iterator.set)
+                path_variable(memory.users[userId], iterator.var, iterator.set)
                 return
             case 'varadd':
-                path_variable(memory.users[userId],iterator.var,iterator.add,true)
+                path_variable(memory.users[userId], iterator.var, iterator.add, true)
                 return
             case 'jump':
                 switch (iterator.jump) {
-                    case 1:
+                    case 'stage':
                         memory.users[userId].stage = iterator.set
                         memory.users[userId].stage2 = 0
                         memory.users[userId].stage3 = 0
                         break
-                    case 2:
-                        memory.users[userId].stage = iterator.set
-                        memory.users[userId].stage2 = 0
-                    case 3:
-                        memory.users[userId].stage3 = iterator.set
+                    case 'stage2':
+                        memory.users[userId].stage2 = iterator.set || memory.users[userId].stage2 + iterator.add
+                        memory.users[userId].stage3 = 0
+                        break
+                    case 'stage3':
+                        memory.users[userId].stage3 = iterator.set || memory.users[userId].stage3 + iterator.add
+                        break
                     default:
                         memory.users[userId].stage = data.tags[iterator.jump].stage
                         memory.users[userId].stage2 = data.tags[iterator.jump].stage2
                         memory.users[userId].stage3 = data.tags[iterator.jump].stage3
                         break
                 }
+                break
             default:
                 break
         }
@@ -205,10 +211,10 @@ function textVar(text, variable) {
     return text.replace(/%(.*?)%/g, (match, p1, offset, string) => { return path_variable(variable, p1) }).replaceAll(':percent-sign:', '%')
 }
 
-function path_variable(variable,path,set,add){
-    if (typeof set === 'undefined') return new Function('variable',`return variable["${path.replace('.','"]["')}"]`)(variable)
-    if (add) return new Function('variable','set',`variable["${path.replace('.','"]["')}"]+=set`)(variable,set)
-    return new Function('variable','set',`variable["${path.replace('.','"]["')}"]=set`)(variable,set)
+function path_variable(variable, path, set, add) {
+    if (typeof set === 'undefined') return new Function('variable', `return variable["${path.replace('.', '"]["')}"]`)(variable)
+    if (add) return new Function('variable', 'set', `variable["${path.replace('.', '"]["')}"]+=set`)(variable, set)
+    return new Function('variable', 'set', `variable["${path.replace('.', '"]["')}"]=set`)(variable, set)
 }
 
 
