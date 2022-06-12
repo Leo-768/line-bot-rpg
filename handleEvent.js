@@ -2,8 +2,6 @@ const { client, ref, memory, data } = require("./index")
 require('dotenv').config()
 
 async function handleEvent(event) {
-    console.log(memory.users[event.source.userId])
-
     if (!memory.users[event.source.userId]) memory.users[event.source.userId] = (await ref.child('users').child(event.source.userId).get()).val() || {}
 
     if (event.type === 'follow') {

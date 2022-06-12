@@ -51,7 +51,12 @@ async function main() {
     })
 
     app.get(/^\/file\/(.*?)(?:\/)?$/, (req, res) => {
-        res.sendFile(__dirname + '/data/file/' + req.params[0])
+        try {
+            res.sendFile(__dirname + '/data/file/' + req.params[0])
+        } catch (err) {
+            console.error(err)
+            res.status(500).end()
+        }
     })
 
     app.listen(process.env.PORT || 3000, () => {
