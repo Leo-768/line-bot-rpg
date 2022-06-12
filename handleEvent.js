@@ -13,7 +13,7 @@ async function handleEvent(event) {
 
     if (memory.coldown[event.source.userId] !== true && event.type === 'message' && event.message.type === 'text') {
         if (event.message.text === 'menu' && memory.users[event.source.userId].menu) {
-            client.linkRichMenuToUser(event.source.userId, data.richmenus[set])
+            client.linkRichMenuToUser(event.source.userId, data.richmenus[memory.users[event.source.userId].menu])
             let msg = require(`./data/imagemap/${memory.users[event.source.userId].menu}.json`)
             msg.type = 'imagemap'
             msg.baseUrl = process.env.URL + '/file/menu/' + memory.users[event.source.userId].menu
