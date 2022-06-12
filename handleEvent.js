@@ -6,33 +6,33 @@ async function handleEvent(event) {
     if (!memory.users[event.source.userId]) memory.users[event.source.userId] = (await ref.child('users').child(event.source.userId).get()).val() || {}
 
     if (event.type === 'follow') {
-        menu(event.source.userId,'start',true)
+        menu(event.source.userId, 'start', true)
         return client.replyMessage(event.replyToken, data.messages['welcome'])
     }
 
-    if (event.type === 'message' && event.message.type === 'text') {
+    if (memory.coldown[event.source.userId] !== true && event.type === 'message' && event.message.type === 'text') {
         if (event.message.text === 'menu' && memory.users[event.source.userId].menu) {
             let msg = require(`./data/imagemap/${memory.users[event.source.userId].menu}.json`)
             msg.type = 'imagemap'
             msg.baseUrl = process.env.URL + '/file/menu/' + memory.users[event.source.userId].menu
             return client.replyMessage(event.replyToken, msg)
         }
-        return getData(event.source.userId,event.replyToken,event.message.text)
+        return getData(event.source.userId, event.replyToken, event.message.text)
     }
 
-    if (event.type === 'postback' && memory.coldown[event.source.userId] !== true) getData(event.source.userId,event.replyToken,event.postback.data)
+    if (event.type === 'postback' && memory.coldown[event.source.userId] !== true) getData(event.source.userId, event.replyToken, event.postback.data)
 
     return Promise.resolve(null)
 }
 
-function getData(userId,replyToken,data) {
+function getData(userId, replyToken, data) {
     memory.coldown[userId] = true
     setTimeout(() => {
         memory.coldown[userId] = false
     }, 500)
     if (data.startsWith('ui')) {
         if (data === 'ui-start') {
-            memory.users[userId] = { stage: 'begin', stage2: 0, stage3: 0 }
+            memory.users[userId] = { stage: 'begin', stage2: 0, stage3: 0, var: { none: true } }
             return run(userId, replyToken)
         } else if (data === 'ui-next' && !memory.users[userId].choose_lock) {
             return run(userId, replyToken)
@@ -66,7 +66,7 @@ function run(userId, replyToken) {
     // 純字串解析
     if (typeof now === 'string') {
         memory.users[userId].stage3++
-        menu(userId,'next')
+        menu(userId, 'next')
         return client.replyMessage(replyToken, { type: 'text', text: textVar(now, user_data) })
     }
     // need 解析
@@ -106,7 +106,7 @@ function run(userId, replyToken) {
         case 'text':
             client.replyMessage(replyToken, { type: 'text', text: textVar(now.text, user_data) })
             memory.users[userId].stage3++
-            menu(userId,'next')
+            menu(userId, 'next')
             break
         case 'choose': {
             let choose = [{
@@ -162,33 +162,36 @@ function run(userId, replyToken) {
                     memory.users[userId].stage3++
                     break
             }
-            menu(userId,'next')
+            menu(userId, 'next')
             break
         }
         default:
             memory.users[userId].stage3++
-            run(userId, replyToken)
+            if (now.action) {
+                do_action(now.action, userId, user_data)
+            }
+            return run(userId, replyToken)
             break
     }
     if (now.action) {
-        do_action(now.action, userId)
+        do_action(now.action, userId, user_data)
     }
 }
 
-function do_action(actions, userId) {
+function do_action(actions, userId, user_data = memory.users[userId]) {
     for (const iterator of actions) {
         switch (iterator.type) {
             case 'linkrichmenu':
-                menu(userId,iterator.menu,true)
+                menu(userId, iterator.menu, true)
                 break
             case 'unlinkrichmenu':
-                menu(userId,false,true)
+                menu(userId, false, true)
                 break
             case 'set':
-                path_variable(memory.users[userId], iterator.var, iterator.set)
+                path_variable(user_data, iterator.var, iterator.set)
                 return
             case 'add':
-                path_variable(memory.users[userId], iterator.var, iterator.add, true)
+                path_variable(user_data, iterator.var, iterator.add, true)
                 return
             case 'jump':
                 switch (iterator.jump) {
@@ -198,11 +201,11 @@ function do_action(actions, userId) {
                         memory.users[userId].stage3 = 0
                         break
                     case 'stage2':
-                        memory.users[userId].stage2 = iterator.set || memory.users[userId].stage2 + iterator.add
+                        memory.users[userId].stage2 = iterator.set || user_data.stage2 + iterator.add
                         memory.users[userId].stage3 = 0
                         break
                     case 'stage3':
-                        memory.users[userId].stage3 = iterator.set || memory.users[userId].stage3 + iterator.add
+                        memory.users[userId].stage3 = iterator.set || user_data.stage3 + iterator.add
                         break
                     default:
                         memory.users[userId].stage = data.tags[iterator.jump].stage
