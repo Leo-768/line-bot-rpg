@@ -24,8 +24,8 @@ async function main() {
         messages[iterator] = require(`./data/message/${iterator}.json`)
     }
 
-    const db = admin.database();
-    const ref = db.ref('/');
+    const db = admin.database()
+    const ref = db.ref('/')
     const client = new line.Client(config)
     exports.client = client
     exports.ref = ref
@@ -36,7 +36,7 @@ async function main() {
 
     setInterval(() => {
         ref.child('users').update(memory.users)
-    }, 30000);
+    }, 30000)
 
     const app = express()
 

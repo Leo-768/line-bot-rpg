@@ -1,5 +1,5 @@
-const line = require('@line/bot-sdk');
-const fs = require('fs');
+const line = require('@line/bot-sdk')
+const fs = require('fs')
 require('dotenv').config()
 
 const config = {
@@ -16,8 +16,8 @@ admin.initializeApp({
     }),
     databaseURL: process.env.FIREBASE_DATABASE_URL
 })
-const db = admin.database();
-const ref = db.ref('/');
+const db = admin.database()
+const ref = db.ref('/')
 
 async function richmenusetup() {
     const richMenuSets = require(__dirname + '/richmenus-set/index.json')
