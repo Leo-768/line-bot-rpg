@@ -6,11 +6,14 @@ async function handleEvent(event) {
     if (!memory.users[event.source.userId]) memory.users[event.source.userId] = (await ref.child('users').child(event.source.userId).get()).val() || {}
 
     if (event.type === 'follow') {
-        client.linkRichMenuToUser(event.source.userId, data.richmenus['start'])
+        menu(event.source.userId,'start')
         return client.replyMessage(event.replyToken, data.messages['welcome'])
     }
 
     if (event.type === 'message' && event.message.type === 'text') {
+        if (event.tags === 'menu') {
+
+        }
         return client.replyMessage(event.replyToken, { type: 'text', text: JSON.stringify(memory.users) + "\n----\n" + (await ref.child('users').child(event.source.userId).get()).val() })
     }
 
@@ -21,7 +24,6 @@ async function handleEvent(event) {
         }, 500)
         if (event.postback.data.startsWith('ui')) {
             if (event.postback.data === 'ui-start') {
-                client.linkRichMenuToUser(event.source.userId, data.richmenus['next'])
                 memory.users[event.source.userId] = { stage: 'begin', stage2: 0, stage3: 0 }
                 return run(event.source.userId, event.replyToken)
             } else if (event.postback.data === 'ui-next' && !memory.users[event.source.userId].choose_lock) {
@@ -34,7 +36,6 @@ async function handleEvent(event) {
             const story = require(`./data/story/${args[1]}/${data_index[args[2]]}`)
             memory.users[event.source.userId].lastchoose = +args[4]
             memory.users[event.source.userId].choose_lock = false
-            await client.linkRichMenuToUser(event.source.userId, data.richmenus['next'])
             if (story[memory.users[event.source.userId].stage3].choose[args[4]].action) {
                 do_action(story[memory.users[event.source.userId].stage3].choose[args[4]].action, event.source.userId)
             } else {
@@ -60,6 +61,7 @@ function run(userId, replyToken) {
     // 純字串解析
     if (typeof now === 'string') {
         memory.users[userId].stage3++
+        menu(userId,'next')
         return client.replyMessage(replyToken, { type: 'text', text: textVar(now, user_data) })
     }
     // need 解析
@@ -99,6 +101,7 @@ function run(userId, replyToken) {
         case 'text':
             client.replyMessage(replyToken, { type: 'text', text: textVar(now.text, user_data) })
             memory.users[userId].stage3++
+            menu(userId,'next')
             break
         case 'choose': {
             let choose = [{
@@ -135,7 +138,7 @@ function run(userId, replyToken) {
                     }
                 }
             })
-            client.unlinkRichMenuFromUser(userId)
+            menu(userId)
             memory.users[userId].choose_lock = true
             break
         }
@@ -154,6 +157,7 @@ function run(userId, replyToken) {
                     memory.users[userId].stage3++
                     break
             }
+            menu(userId,'next')
             break
         }
         default:
@@ -170,10 +174,10 @@ function do_action(actions, userId) {
     for (const iterator of actions) {
         switch (iterator.type) {
             case 'linkrichmenu':
-                client.linkRichMenuToUser(userId, data.richmenus[iterator.menu])
+                menu(userId,iterator.menu,true)
                 break
             case 'unlinkrichmenu':
-                client.unlinkRichMenuFromUser(userId)
+                menu(userId,false,true)
                 break
             case 'varset':
                 path_variable(memory.users[userId], iterator.var, iterator.set)
@@ -219,12 +223,12 @@ function path_variable(variable, path, set, add) {
     return new Function('variable', 'set', `variable["${path.replace('.', '"]["')}"]=set`)(variable, set)
 }
 
-function menu(userId,menuId){
-    if(menuId){
-        if (memory.users[userId].menu === menuId) return
-        client.linkRichMenuToUser(userId, data.richmenus[menuId])
-        memory.users[userId].menu = menuId
-    }else if (memory.users[userId].menu){
+function menu(userId, set = false, cover = false) {
+    if (set) {
+        if (memory.users[userId].menu === set || memory.users[userId].menu && !cover) return
+        client.linkRichMenuToUser(userId, data.richmenus[set])
+        memory.users[userId].menu = set
+    } else if (memory.users[userId].menu) {
         client.unlinkRichMenuFromUser(userId)
         delete memory.users[userId].menu
     }
