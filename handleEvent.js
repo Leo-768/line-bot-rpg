@@ -6,7 +6,7 @@ async function handleEvent(event) {
     if (!memory.users[event.source.userId]) memory.users[event.source.userId] = (await ref.child('users').child(event.source.userId).get()).val() || {}
 
     if (event.type === 'follow') {
-        if (!memory.users[userId]) menu(event.source.userId, 'start', true)
+        if (!memory.users[event.source.userId]) menu(event.source.userId, 'start', true)
         return client.replyMessage(event.replyToken, data.messages['welcome'])
     }
 
