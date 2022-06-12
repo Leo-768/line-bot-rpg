@@ -9,5 +9,7 @@
     "...",
     {"type":"action","action":[{"type":"jump","jump":"set"}]},
     {"type":"block-end"},
-    "wow"
+    "wow",
+    "回去吧",
+    {"type":"action","action":[{"type":"jump","jump":"stage","set":"begin"}]}
 ]
