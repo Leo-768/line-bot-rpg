@@ -219,5 +219,15 @@ function path_variable(variable, path, set, add) {
     return new Function('variable', 'set', `variable["${path.replace('.', '"]["')}"]=set`)(variable, set)
 }
 
+function menu(userId,menuId){
+    if(menuId){
+        if (memory.users[userId].menu === menuId) return
+        client.linkRichMenuToUser(userId, data.richmenus[menuId])
+        memory.users[userId].menu = menuId
+    }else if (memory.users[userId].menu){
+        client.unlinkRichMenuFromUser(userId)
+        delete memory.users[userId].menu
+    }
+}
 
 exports.handleEvent = handleEvent
