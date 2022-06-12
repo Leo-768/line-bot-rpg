@@ -1,0 +1,17 @@
+{
+    "baseSize": {
+        "width": 1040,
+        "height": 104
+    },
+    "altText": "繼續按鈕",
+    "actions": [{
+        "type": "message",
+        "text": "ui-next",
+        "area": {
+            "x": 0,
+            "y": 0,
+            "width": 1040,
+            "height": 104
+        }
+    }]
+}

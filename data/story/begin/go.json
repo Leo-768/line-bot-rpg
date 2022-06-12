@@ -2,6 +2,11 @@
     "走吧",
     "-------",
     {"type":"tag","tag":"set"},
-    {"type":"choose","choose":[{"display-text":"hi~"},{"display-text":"...","send-text":"","action":[{"type":"jump","jump":"stage3","add":-1}]}]},
-    "ouo"
+    {"type":"choose","choose":[{"display-text":"hi~","action":[{"type":"add","var":"var.i","add":1}]},{"display-text":"...","send-text":"","action":[{"type":"jump","jump":"stage3","add":-1}]}]},
+    {"type":"block-start","need":[{"type":"variable","variable":"var.i","max":5}]},
+    "沒禮貌!",
+    "...",
+    {"type":"action","action":[{"type":"jump","jump":"set"}]},
+    {"type":"block-end"},
+    "wow"
 ]

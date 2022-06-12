@@ -6,46 +6,51 @@ async function handleEvent(event) {
     if (!memory.users[event.source.userId]) memory.users[event.source.userId] = (await ref.child('users').child(event.source.userId).get()).val() || {}
 
     if (event.type === 'follow') {
-        menu(event.source.userId,'start')
+        menu(event.source.userId,'start',true)
         return client.replyMessage(event.replyToken, data.messages['welcome'])
     }
 
     if (event.type === 'message' && event.message.type === 'text') {
-        if (event.tags === 'menu') {
-
+        if (event.message.text === 'menu' && memory.users[event.source.userId].menu) {
+            let msg = require(`./data/imagemap/${memory.users[event.source.userId].menu}.json`)
+            msg.type = 'imagemap'
+            msg.baseUrl = process.env.URL + '/file/menu/' + memory.users[event.source.userId].menu
+            return client.replyMessage(event.replyToken, msg)
         }
-        return client.replyMessage(event.replyToken, { type: 'text', text: JSON.stringify(memory.users) + "\n----\n" + (await ref.child('users').child(event.source.userId).get()).val() })
+        return getData(event.source.userId,event.replyToken,event.message.text)
     }
 
-    if (event.type === 'postback' && memory.coldown[event.source.userId] !== true) {
-        memory.coldown[event.source.userId] = true
-        setTimeout(() => {
-            memory.coldown[event.source.userId] = false
-        }, 500)
-        if (event.postback.data.startsWith('ui')) {
-            if (event.postback.data === 'ui-start') {
-                memory.users[event.source.userId] = { stage: 'begin', stage2: 0, stage3: 0 }
-                return run(event.source.userId, event.replyToken)
-            } else if (event.postback.data === 'ui-next' && !memory.users[event.source.userId].choose_lock) {
-                return run(event.source.userId, event.replyToken)
-            }
-        } else if (event.postback.data.startsWith('choose')) {
-            const args = event.postback.data.split('-')
-            if (!memory.users[event.source.userId].choose_lock || !(memory.users[event.source.userId].stage === args[1]) || !(memory.users[event.source.userId].stage2 === +args[2]) || !(memory.users[event.source.userId].stage3 === +args[3])) return
-            const data_index = require(`./data/story/${args[1]}/index.json`)
-            const story = require(`./data/story/${args[1]}/${data_index[args[2]]}`)
-            memory.users[event.source.userId].lastchoose = +args[4]
-            memory.users[event.source.userId].choose_lock = false
-            if (story[memory.users[event.source.userId].stage3].choose[args[4]].action) {
-                do_action(story[memory.users[event.source.userId].stage3].choose[args[4]].action, event.source.userId)
-            } else {
-                memory.users[event.source.userId].stage3++
-            }
-            run(event.source.userId, event.replyToken)
-        }
-    }
+    if (event.type === 'postback' && memory.coldown[event.source.userId] !== true) getData(event.source.userId,event.replyToken,event.postback.data)
 
     return Promise.resolve(null)
+}
+
+function getData(userId,replyToken,data) {
+    memory.coldown[userId] = true
+    setTimeout(() => {
+        memory.coldown[userId] = false
+    }, 500)
+    if (data.startsWith('ui')) {
+        if (data === 'ui-start') {
+            memory.users[userId] = { stage: 'begin', stage2: 0, stage3: 0 }
+            return run(userId, replyToken)
+        } else if (data === 'ui-next' && !memory.users[userId].choose_lock) {
+            return run(userId, replyToken)
+        }
+    } else if (data.startsWith('choose')) {
+        const args = data.split('-')
+        if (!memory.users[userId].choose_lock || !(memory.users[userId].stage === args[1]) || !(memory.users[userId].stage2 === +args[2]) || !(memory.users[userId].stage3 === +args[3])) return
+        const data_index = require(`./data/story/${args[1]}/index.json`)
+        const story = require(`./data/story/${args[1]}/${data_index[args[2]]}`)
+        memory.users[userId].lastchoose = +args[4]
+        memory.users[userId].choose_lock = false
+        if (story[memory.users[userId].stage3].choose[args[4]].action) {
+            do_action(story[memory.users[userId].stage3].choose[args[4]].action, userId)
+        } else {
+            memory.users[userId].stage3++
+        }
+        run(userId, replyToken)
+    }
 }
 
 function run(userId, replyToken) {
@@ -179,10 +184,10 @@ function do_action(actions, userId) {
             case 'unlinkrichmenu':
                 menu(userId,false,true)
                 break
-            case 'varset':
+            case 'set':
                 path_variable(memory.users[userId], iterator.var, iterator.set)
                 return
-            case 'varadd':
+            case 'add':
                 path_variable(memory.users[userId], iterator.var, iterator.add, true)
                 return
             case 'jump':
