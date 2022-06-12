@@ -200,10 +200,10 @@ function do_action(actions, userId, user_data = memory.users[userId]) {
                 menu(userId, false, true)
                 break
             case 'set':
-                path_variable(user_data, iterator.var, iterator.set)
+                path_variable(memory.users[userId], iterator.var, iterator.set)
                 return
             case 'add':
-                path_variable(user_data, iterator.var, iterator.add, true)
+                path_variable(memory.users[userId], iterator.var, iterator.add, true)
                 return
             case 'jump':
                 switch (iterator.jump) {
