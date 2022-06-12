@@ -1,0 +1,17 @@
+{
+    "baseSize": {
+        "width": 1040,
+        "height": 104
+    },
+    "altText": "開始遊戲",
+    "actions": [{
+        "type": "message",
+        "text": "ui-start",
+        "area": {
+            "x": 0,
+            "y": 0,
+            "width": 1040,
+            "height": 104
+        }
+    }]
+}

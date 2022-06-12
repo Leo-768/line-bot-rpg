@@ -6,12 +6,13 @@ async function handleEvent(event) {
     if (!memory.users[event.source.userId]) memory.users[event.source.userId] = (await ref.child('users').child(event.source.userId).get()).val() || {}
 
     if (event.type === 'follow') {
-        menu(event.source.userId, 'start', true)
+        if (!memory.users[userId]) menu(event.source.userId, 'start', true)
         return client.replyMessage(event.replyToken, data.messages['welcome'])
     }
 
     if (memory.coldown[event.source.userId] !== true && event.type === 'message' && event.message.type === 'text') {
         if (event.message.text === 'menu' && memory.users[event.source.userId].menu) {
+            client.linkRichMenuToUser(event.source.userId, data.richmenus[set])
             let msg = require(`./data/imagemap/${memory.users[event.source.userId].menu}.json`)
             msg.type = 'imagemap'
             msg.baseUrl = process.env.URL + '/file/menu/' + memory.users[event.source.userId].menu
