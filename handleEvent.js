@@ -75,7 +75,19 @@ function run(userId, replyToken) {
         for (const i of now.need) {
             let variable = path_variable(user_data, i.variable)
             if (i.type === 'variable') {
-                if (((i.equal === undefined || variable === i.equal) && (i.min === undefined || variable >= i.min) && (i.max === undefined || variable <= i.max))) {
+                if (i.equal !== undefined) {
+                    if(Array.isArray(i.equal)){
+                        if(i.equal.indexOf(variable) !== -1){
+                            success = !i.not
+                        }else{
+                            success = !!i.not
+                        }
+                    }else if (variable === i.equal){
+                        success = !i.not
+                    }else{
+                        success =!!i.not
+                    }
+                } else if ((i.min === undefined || variable >= i.min) && (i.max === undefined || variable <= i.max)) {
                     success = !i.not
                 } else {
                     success = !!i.not
@@ -226,9 +238,9 @@ function textVar(text, variable) {
 }
 
 function path_variable(variable, path, set, add) {
-    if (typeof set === 'undefined') return new Function('variable', `return variable["${path.replace('.', '"]["')}"]`)(variable)
-    if (add) return new Function('variable', 'set', `variable["${path.replace('.', '"]["')}"]+=set`)(variable, set)
-    return new Function('variable', 'set', `variable["${path.replace('.', '"]["')}"]=set`)(variable, set)
+    if (typeof set === 'undefined') return new Function('variable', `return variable.${path}`)(variable)
+    if (add) return new Function('variable', 'set', `variable.${path}+=set`)(variable, set)
+    return new Function('variable', 'set', `variable.${path}=set`)(variable, set)
 }
 
 function menu(userId, set = false, cover = false) {
