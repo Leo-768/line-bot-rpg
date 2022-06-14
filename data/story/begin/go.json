@@ -3,7 +3,7 @@
     "-------",
     {"type":"tag","tag":"set"},
     {"type":"action","action":[{"type":"set","var":"var.i","set":0}]},
-    {"type":"choose","choose":[{"display-text":"hi~"},{"display-text":"...","send-text":"","action":[{"type":"jump","jump":"stage3","add":0},{"type":"add","var":"var.i","add":1}]}]},
+    {"type":"choose","choose":[{"display-text":"hi~"},{"display-text":"...","send-text":"","action":[{"type":"jump","jump":"stage3","add":-1},{"type":"add","var":"var.i","add":1}]}]},
     {"type":"block-start","need":[{"type":"variable","variable":"var.i","max":5}]},
     "沒禮貌!",
     "...",
