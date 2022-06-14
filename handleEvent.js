@@ -17,6 +17,16 @@ async function handleEvent(event) {
             msg.baseUrl = process.env.URL + '/file/menu/' + memory.users[event.source.userId].menu
             return client.replyMessage(event.replyToken, msg)
         }
+        if (memory.users[event.source.userId].typing){
+            const data_index = require(`./data/story/${memory.users[event.source.userId].stage}/index.json`)
+            const story = require(`./data/story/${memory.users[event.source.userId].stage}/${data_index[memory.users[event.source.userId].stage2]}`)
+            memory.users[event.source.userId].lasttype = event.message.text
+            memory.users[event.source.userId].choose_lock = false
+            memory.users[event.source.userId].typing = false
+            if (story[memory.users[userId].stage3].action) do_action(story[memory.users[userId].stage3].action, event.source.userId)
+            memory.users[event.source.userId].stage3++
+            run(event.source.userId, event.replyToken)
+        }
         return getData(event.source.userId, event.replyToken, event.message.text)
     }
 
@@ -44,11 +54,8 @@ function getData(userId, replyToken, data) {
         const story = require(`./data/story/${args[1]}/${data_index[args[2]]}`)
         memory.users[userId].lastchoose = +args[4]
         memory.users[userId].choose_lock = false
-        if (story[memory.users[userId].stage3].choose[args[4]].action) {
-            do_action(story[memory.users[userId].stage3].choose[args[4]].action, userId)
-        } else {
-            memory.users[userId].stage3++
-        }
+        if (story[memory.users[userId].stage3].choose[args[4]].action) do_action(story[memory.users[userId].stage3].choose[args[4]].action, userId)
+        memory.users[userId].stage3++
         run(userId, replyToken)
     }
 }
@@ -177,6 +184,12 @@ function run(userId, replyToken) {
             menu(userId, 'next')
             break
         }
+        case 'type':
+            
+            menu(userId)
+            memory.users[userId].choose_lock = true
+            memory.users[userId].typing = true
+            break
         default:
             memory.users[userId].stage3++
             if (now.action) {
@@ -190,16 +203,14 @@ function run(userId, replyToken) {
     }
 }
 
-function do_action(actions, userId, user_data = memory.users[userId]) {
+function do_action(actions, userId, user_data = JSON.parse(JSON.stringify(memory.users[userId]))) {
     for (const iterator of actions) {
         switch (iterator.type) {
-            case 'linkrichmenu':
-                menu(userId, iterator.menu, true)
-                break
-            case 'unlinkrichmenu':
-                menu(userId, false, true)
+            case 'menu':
+                menu(userId, iterator.menu || false, true)
                 break
             case 'set':
+                if(typeof iterator.set === 'string') iterator.set = textVar(iterator.set,memory.users[userId])
                 path_variable(memory.users[userId], iterator.var, iterator.set)
                 return
             case 'add':
@@ -213,11 +224,11 @@ function do_action(actions, userId, user_data = memory.users[userId]) {
                         memory.users[userId].stage3 = 0
                         break
                     case 'stage2':
-                        memory.users[userId].stage2 = iterator.set || user_data.stage2 + iterator.add
+                        memory.users[userId].stage2 = iterator.set || user_data.stage2 + iterator.add || 0
                         memory.users[userId].stage3 = 0
                         break
                     case 'stage3':
-                        memory.users[userId].stage3 = iterator.set || user_data.stage3 + iterator.add
+                        memory.users[userId].stage3 = iterator.set || user_data.stage3 + iterator.add || 0
                         break
                     default:
                         memory.users[userId].stage = data.tags[iterator.jump].stage
