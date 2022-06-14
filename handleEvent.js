@@ -23,7 +23,7 @@ async function handleEvent(event) {
             memory.users[event.source.userId].lasttype = event.message.text
             memory.users[event.source.userId].choose_lock = false
             memory.users[event.source.userId].typing = false
-            if (story[memory.users[userId].stage3].action) do_action(story[memory.users[userId].stage3].action, event.source.userId)
+            if (story[memory.users[event.source.userId].stage3].action) do_action(story[memory.users[userId].stage3].action, event.source.userId)
             memory.users[event.source.userId].stage3++
             run(event.source.userId, event.replyToken)
         }
