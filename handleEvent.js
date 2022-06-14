@@ -184,19 +184,25 @@ function run(userId, replyToken) {
             menu(userId, 'next')
             break
         }
-        case 'type':
-            
-            menu(userId)
-            memory.users[userId].choose_lock = true
-            memory.users[userId].typing = true
+        case 'stop':
             break
         default:
             memory.users[userId].stage3++
+            if (now.input){
+                menu(userId)
+                memory.users[userId].choose_lock = true
+                memory.users[userId].typing = true
+            }
             if (now.action) {
                 do_action(now.action, userId, user_data)
             }
             return run(userId, replyToken)
             break
+    }
+    if (now.input) {
+        menu(userId)
+        memory.users[userId].choose_lock = true
+        memory.users[userId].typing = true
     }
     if (now.action) {
         do_action(now.action, userId, user_data)

@@ -11,8 +11,7 @@
     {"type":"block-end"},
     "wow",
     "回去吧",
-    "話說你的名字?",
-    {"type":"type"},
+    {"type":"text","text":"話說你的名字?","input":true},
     "%lasttype%……",
     {"type":"action","action":[{"type":"jump","jump":"stage","set":"begin"}]}
 ]
