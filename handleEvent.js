@@ -185,6 +185,7 @@ function run(userId, replyToken) {
             break
         }
         case 'stop':
+            memory.users[userId].stage3++
             break
         default:
             memory.users[userId].stage3++
@@ -192,6 +193,7 @@ function run(userId, replyToken) {
                 menu(userId)
                 memory.users[userId].choose_lock = true
                 memory.users[userId].typing = true
+                memory.users[userId].stage3--
             }
             if (now.action) {
                 do_action(now.action, userId, user_data)
@@ -203,6 +205,7 @@ function run(userId, replyToken) {
         menu(userId)
         memory.users[userId].choose_lock = true
         memory.users[userId].typing = true
+        memory.users[userId].stage3--
     }
     if (now.action) {
         do_action(now.action, userId, user_data)
