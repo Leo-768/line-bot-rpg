@@ -30,7 +30,7 @@ async function main() {
     exports.client = client
     exports.ref = ref
     exports.memory = memory
-    const data = { messages: messages, altText: require('./data/altText.json'), richmenus: (await ref.child('richmenus').get()).val(), tags: (await ref.child('tags').get()).val() }
+    const data = { messages: messages, altText: require('./data/message/alttext.json'), richmenus: (await ref.child('richmenus').get()).val(), tags: (await ref.child('tags').get()).val() }
     exports.data = data
     const { handleEvent } = require("./handleEvent.js")
 
