@@ -55,7 +55,11 @@ function getData(userId, replyToken, data) {
         memory.users[userId].lastchoose = +args[4]
         memory.users[userId].choose_lock = false
         if (story[memory.users[userId].stage.stage3].choose[args[4]].action) do_action(story[memory.users[userId].stage.stage3].choose[args[4]].action, userId)
-        memory.users[userId].stage.stage3++
+        if (memory.users[userId].jumpping){
+            delete memory.users[userId].jumpping
+        }else{
+            memory.users[userId].stage.stage3++
+        }
         run(userId, replyToken)
     }
 }
@@ -124,7 +128,6 @@ function run(userId, replyToken) {
     switch (now.type) {
         case 'text':
             client.replyMessage(replyToken, { type: 'text', text: textVar(now.text, user_data) })
-            memory.users[userId].stage.stage3++
             menu(userId, 'next')
             break
         case '---':
@@ -182,7 +185,7 @@ function run(userId, replyToken) {
             })
             menu(userId)
             memory.users[userId].choose_lock = true
-            break
+            return
         }
         case 'image': {
             const url = process.env.URL + '/file/' + now.image
@@ -196,7 +199,6 @@ function run(userId, replyToken) {
                         originalContentUrl: url,
                         previewImageUrl: url
                     })
-                    memory.users[userId].stage.stage3++
                     break
             }
             menu(userId, 'next')
@@ -204,13 +206,10 @@ function run(userId, replyToken) {
         }
         case 'anchor':
             memory.users[userId].anchor[now.anchor] = now.set
-            memory.users[userId].stage.stage3++
             break
         case 'stop':
-            memory.users[userId].stage.stage3++
             break
         default:
-            memory.users[userId].stage.stage3++
             if (now.input){
                 menu(userId)
                 memory.users[userId].choose_lock = true
@@ -220,17 +219,26 @@ function run(userId, replyToken) {
             if (now.action) {
                 do_action(now.action, userId, user_data)
             }
+            if (memory.users[userId].jumpping){
+                delete memory.users[userId].jumpping
+            }else{
+                memory.users[userId].stage.stage3++
+            }
             return run(userId, replyToken)
-            break
     }
     if (now.input) {
         menu(userId)
         memory.users[userId].choose_lock = true
         memory.users[userId].typing = true
-        memory.users[userId].stage.stage3--
+        memory.users[userId].jumpping = true
     }
     if (now.action) {
         do_action(now.action, userId, user_data)
+    }
+    if (memory.users[userId].jumpping){
+        delete memory.users[userId].jumpping
+    }else{
+        memory.users[userId].stage.stage3++
     }
 }
 
@@ -264,6 +272,7 @@ function do_action(actions, userId, user_data = JSON.parse(JSON.stringify(memory
                         memory.users[userId].stage = data.tags[iterator.jump]
                         break
                 }
+                memory.users[userId].jumpping = true
                 break
             default:
                 break
