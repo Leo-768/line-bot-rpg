@@ -18,13 +18,13 @@ async function handleEvent(event) {
             return client.replyMessage(event.replyToken, msg)
         }
         if (memory.users[event.source.userId].typing){
-            const data_index = require(`./data/story/${memory.users[event.source.userId].stage}/index.json`)
-            const story = require(`./data/story/${memory.users[event.source.userId].stage}/${data_index[memory.users[event.source.userId].stage2]}`)
+            const data_index = require(`./data/story/${memory.users[event.source.userId].stage.stage}/index.json`)
+            const story = require(`./data/story/${memory.users[event.source.userId].stage.stage}/${data_index[memory.users[event.source.userId].stage.stage2]}`)
             memory.users[event.source.userId].lasttype = event.message.text
             memory.users[event.source.userId].choose_lock = false
             memory.users[event.source.userId].typing = false
-            if (story[memory.users[event.source.userId].stage3].action) do_action(story[memory.users[userId].stage3].action, event.source.userId)
-            memory.users[event.source.userId].stage3++
+            if (story[memory.users[event.source.userId].stage.stage3].action) do_action(story[memory.users[userId].stage.stage3].action, event.source.userId)
+            memory.users[event.source.userId].stage.stage3++
             run(event.source.userId, event.replyToken)
         }
         return getData(event.source.userId, event.replyToken, event.message.text)
@@ -42,37 +42,37 @@ function getData(userId, replyToken, data) {
     }, 500)
     if (data.startsWith('ui')) {
         if (data === 'ui-start') {
-            memory.users[userId] = { stage: 'begin', stage2: 0, stage3: 0, var: { none: true } }
+            memory.users[userId] = { stage: {stage: 'begin', stage2: 0, stage3: 0}, var: { none: true } }
             return run(userId, replyToken)
         } else if (data === 'ui-next' && !memory.users[userId].choose_lock) {
             return run(userId, replyToken)
         }
     } else if (data.startsWith('choose')) {
         const args = data.split('-')
-        if (!memory.users[userId].choose_lock || !(memory.users[userId].stage === args[1]) || !(memory.users[userId].stage2 === +args[2]) || !(memory.users[userId].stage3 === +args[3])) return
+        if (!memory.users[userId].choose_lock || !(memory.users[userId].stage.stage === args[1]) || !(memory.users[userId].stage.stage2 === +args[2]) || !(memory.users[userId].stage.stage3 === +args[3])) return
         const data_index = require(`./data/story/${args[1]}/index.json`)
         const story = require(`./data/story/${args[1]}/${data_index[args[2]]}`)
         memory.users[userId].lastchoose = +args[4]
         memory.users[userId].choose_lock = false
-        if (story[memory.users[userId].stage3].choose[args[4]].action) do_action(story[memory.users[userId].stage3].choose[args[4]].action, userId)
-        memory.users[userId].stage3++
+        if (story[memory.users[userId].stage.stage3].choose[args[4]].action) do_action(story[memory.users[userId].stage.stage3].choose[args[4]].action, userId)
+        memory.users[userId].stage.stage3++
         run(userId, replyToken)
     }
 }
 
 function run(userId, replyToken) {
     const user_data = JSON.parse(JSON.stringify(memory.users[userId]))
-    const index = require(`./data/story/${user_data.stage}/index.json`)
-    const story = require(`./data/story/${user_data.stage}/${index[user_data.stage2]}`)
-    const now = story[user_data.stage3]
+    const index = require(`./data/story/${user_data.stage.stage}/index.json`)
+    const story = require(`./data/story/${user_data.stage.stage}/${index[user_data.stage.stage2]}`)
+    const now = story[user_data.stage.stage3]
     if (!now) {
-        memory.users[userId].stage2++
-        memory.users[userId].stage3 = 0
+        memory.users[userId].stage.stage2++
+        memory.users[userId].stage.stage3 = 0
         return run(userId, replyToken)
     }
     // 純字串解析
     if (typeof now === 'string') {
-        memory.users[userId].stage3++
+        memory.users[userId].stage.stage3++
         menu(userId, 'next')
         return client.replyMessage(replyToken, { type: 'text', text: textVar(now, user_data) })
     }
@@ -104,7 +104,7 @@ function run(userId, replyToken) {
         }
         if (!success) {
             if (now.type === 'block-start') {
-                let i = user_data.stage3 + 1
+                let i = user_data.stage.stage3 + 1
                 let iterate = 1
                 while (iterate > 0) {
                     if (story[i].type === 'block-end') {
@@ -114,9 +114,9 @@ function run(userId, replyToken) {
                     }
                     i++
                 }
-                memory.users[userId].stage3 = i
+                memory.users[userId].stage.stage3 = i
             } else {
-                memory.users[userId].stage3++
+                memory.users[userId].stage.stage3++
             }
             return run(userId, replyToken)
         }
@@ -124,9 +124,27 @@ function run(userId, replyToken) {
     switch (now.type) {
         case 'text':
             client.replyMessage(replyToken, { type: 'text', text: textVar(now.text, user_data) })
-            memory.users[userId].stage3++
+            memory.users[userId].stage.stage3++
             menu(userId, 'next')
             break
+        case '---':
+            client.replyMessage(replyToken, {
+                type: 'flex',
+                altText: data.altText,
+                contents: {
+                    type: 'bubble',
+                    size: 'giga',
+                    body: {
+                        type: 'box',
+                        layout: 'vertical',
+                        contents: [{
+                            type: 'separator',
+                            margin: 'xs'
+                        }]
+                    }
+                }
+            })
+        break
         case 'choose': {
             let choose = [{
                 type: 'separator',
@@ -136,7 +154,7 @@ function run(userId, replyToken) {
                 choose.push({
                     type: 'button',
                     action: {
-                        type: 'postback', label: textVar(i['display-text'], memory), data: `choose-${user_data.stage}-${user_data.stage2}-${user_data.stage3}-${j}`, displayText: (() => {
+                        type: 'postback', label: textVar(i['display-text'], memory), data: `choose-${user_data.stage.stage}-${user_data.stage.stage2}-${user_data.stage.stage3}-${j}`, displayText: (() => {
                             if (i['send-text'] === undefined) return textVar(i['display-text'], memory)
                             if (i['send-text'] === '') return undefined
                             return textVar(i['send-text'], memory)
@@ -178,22 +196,26 @@ function run(userId, replyToken) {
                         originalContentUrl: url,
                         previewImageUrl: url
                     })
-                    memory.users[userId].stage3++
+                    memory.users[userId].stage.stage3++
                     break
             }
             menu(userId, 'next')
             break
         }
+        case 'anchor':
+            memory.users[userId].anchor[now.anchor] = now.set
+            memory.users[userId].stage.stage3++
+            break
         case 'stop':
-            memory.users[userId].stage3++
+            memory.users[userId].stage.stage3++
             break
         default:
-            memory.users[userId].stage3++
+            memory.users[userId].stage.stage3++
             if (now.input){
                 menu(userId)
                 memory.users[userId].choose_lock = true
                 memory.users[userId].typing = true
-                memory.users[userId].stage3--
+                memory.users[userId].stage.stage3--
             }
             if (now.action) {
                 do_action(now.action, userId, user_data)
@@ -205,7 +227,7 @@ function run(userId, replyToken) {
         menu(userId)
         memory.users[userId].choose_lock = true
         memory.users[userId].typing = true
-        memory.users[userId].stage3--
+        memory.users[userId].stage.stage3--
     }
     if (now.action) {
         do_action(now.action, userId, user_data)
@@ -228,21 +250,18 @@ function do_action(actions, userId, user_data = JSON.parse(JSON.stringify(memory
             case 'jump':
                 switch (iterator.jump) {
                     case 'stage':
-                        memory.users[userId].stage = iterator.set
-                        memory.users[userId].stage2 = 0
-                        memory.users[userId].stage3 = 0
+                        memory.users[userId].stage = {stage: iterator.set,stage2: 0, stage3: 0}
                         break
                     case 'stage2':
-                        memory.users[userId].stage2 = iterator.set || user_data.stage2 + iterator.add || 0
-                        memory.users[userId].stage3 = 0
+                        memory.users[userId].stage.stage2 = iterator.set || user_data.stage.stage2 + iterator.add || 0
+                        memory.users[userId].stage.stage3 = 0
                         break
                     case 'stage3':
-                        memory.users[userId].stage3 = iterator.set || user_data.stage3 + iterator.add || 0
+                        memory.users[userId].stage.stage3 = iterator.set || user_data.stage.stage3 + iterator.add || 0
                         break
                     default:
-                        memory.users[userId].stage = data.tags[iterator.jump].stage
-                        memory.users[userId].stage2 = data.tags[iterator.jump].stage2
-                        memory.users[userId].stage3 = data.tags[iterator.jump].stage3
+                        if (memory.users[userId].anchor[iterator.jump]) memory.users[userId].stage = memory.users[userId].anchor[iterator.jump]
+                        memory.users[userId].stage = data.tags[iterator.jump]
                         break
                 }
                 break
